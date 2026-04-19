@@ -1,0 +1,2217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>BEACON — Vermont SHSO · Data Companion</title>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     PRODUCTION NOTE — SRI HASHES
+     jsPDF and xlsx hashes verified from npm package files.
+     Chart.js hash must be generated from the exact CDN-served file:
+       curl -s https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js \
+         | openssl dgst -sha384 -binary | openssl base64 -A
+     Then add:  integrity="sha384-<hash>" crossorigin="anonymous"
+═══════════════════════════════════════════════════════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"></script>
+<style>
+:root {
+  --green-dark:  #1b3d2b;
+  --green-mid:   #2a5c3f;
+  --green-light: #3a7a55;
+  --gold:        #c9973a;
+  --gold-light:  #e8c87a;
+  --off-white:   #f4f3ef;
+  --charcoal:    #1e261e;
+  --muted:       #6b7c6b;
+  --border:      #dce8dc;
+  --red:         #b84141;
+  --teal:        #2e7d7a;
+  --shadow:      0 4px 28px rgba(27,61,43,0.10);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:Arial,'Franklin Gothic Medium',sans-serif;background:var(--off-white);color:var(--charcoal);font-size:16px;line-height:1.6;}
+
+/* ── HEADER ── */
+header{background:var(--green-dark);position:sticky;top:0;z-index:200;box-shadow:0 2px 20px rgba(0,0,0,0.35);}
+.header-top{display:flex;align-items:center;justify-content:space-between;padding:10px 32px;border-bottom:1px solid rgba(201,151,58,0.25);}
+.logo-left,.logo-right{font-weight:700;font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:rgba(255,255,255,0.8);line-height:1.3;}
+.logo-left span,.logo-right span{display:block;font-size:9.5px;font-weight:300;letter-spacing:0.08em;color:rgba(255,255,255,0.4);margin-top:1px;}
+.wordmark-wrap{text-align:center;flex:1;padding:0 20px;}
+.wordmark-sub{font-size:8.5px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-top:3px;font-weight:400;font-family:Arial,sans-serif;}
+nav{background:var(--green-mid);overflow-x:auto;scrollbar-width:none;}
+nav::-webkit-scrollbar{display:none;}
+.nav-inner{display:flex;align-items:stretch;min-width:max-content;padding:0 20px;}
+nav a{color:rgba(255,255,255,0.7);text-decoration:none;font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;padding:9px 14px;border-bottom:3px solid transparent;transition:all 0.2s;white-space:nowrap;}
+nav a:hover,nav a.active{color:var(--gold-light);border-bottom-color:var(--gold);background:rgba(255,255,255,0.05);}
+
+/* ── HERO ── */
+.hero{background:linear-gradient(140deg,var(--green-dark) 0%,#0d2016 100%);color:white;padding:48px 40px 40px;text-align:center;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.018'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E");}
+.hero-cea-label{display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold);background:rgba(201,151,58,0.12);border:1px solid rgba(201,151,58,0.3);padding:5px 16px;border-radius:20px;margin-bottom:14px;position:relative;}
+.hero h1{font-family:'Franklin Gothic Heavy','Franklin Gothic Demi','Arial Black',Arial,sans-serif;font-size:24px;font-weight:700;margin-bottom:10px;letter-spacing:0.02em;position:relative;}
+.hero p{font-size:14.5px;color:rgba(255,255,255,0.65);max-width:660px;margin:0 auto 18px;line-height:1.75;position:relative;}
+.hero-pills{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;position:relative;}
+.pill{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.65);font-size:10.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:5px 13px;border-radius:20px;}
+.pill.gold{background:rgba(201,151,58,0.15);border-color:rgba(201,151,58,0.35);color:var(--gold-light);}
+
+/* ── MAIN ── */
+main{max-width:1100px;margin:0 auto;padding:0 24px 60px;}
+
+/* ── CEA SECTION ── */
+.cea-section{margin-top:48px;background:white;border-radius:12px;box-shadow:var(--shadow);overflow:hidden;border:1px solid var(--border);animation:fadeUp 0.45s ease both;scroll-margin-top:120px;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+.section-header{background:linear-gradient(90deg,var(--green-dark) 0%,var(--green-mid) 100%);color:white;padding:22px 30px 30px;display:flex;align-items:flex-start;}
+.section-header-text h2{font-family:'Franklin Gothic Heavy','Franklin Gothic Demi','Arial Black',Arial,sans-serif;font-size:19px;font-weight:700;line-height:1.2;margin-top:10px;}
+.section-header-text p{font-size:12px;color:rgba(255,255,255,0.6);margin-top:6px;font-weight:300;letter-spacing:0.01em;}
+.cea-tag{background:rgba(201,151,58,0.18);border:1px solid rgba(201,151,58,0.4);color:var(--gold-light);font-size:9px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;padding:3px 9px;border-radius:3px;white-space:nowrap;margin-bottom:2px;display:inline-block;}
+.section-body{padding:26px 30px;}
+
+/* ── STAT CARDS ── */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px;}
+.stat-card{background:var(--off-white);border:1px solid var(--border);border-radius:8px;padding:16px 18px;position:relative;overflow:hidden;transition:transform 0.18s,box-shadow 0.18s;}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(27,61,43,0.10);}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--gold);}
+.stat-card.alert::before{background:var(--red);}
+.stat-card.good::before{background:var(--green-light);}
+.stat-card.pending::before{background:var(--muted);}
+.stat-label{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.stat-value{font-family:'Franklin Gothic Heavy','Franklin Gothic Demi','Arial Black',Arial,sans-serif;font-size:34px;font-weight:700;color:var(--green-dark);line-height:1;}
+.stat-value.alert{color:var(--red);}
+.stat-value.good{color:var(--green-light);}
+.stat-value.pending{color:var(--muted);font-size:22px;}
+.stat-note{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.4;}
+
+/* ── PRIMARY CHARTS ── */
+.chart-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;margin-bottom:20px;}
+.chart-box{background:var(--off-white);border:1px solid var(--border);border-radius:8px;padding:18px;}
+.chart-title{font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--green-dark);margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+.chart-box canvas{max-height:200px;}
+
+/* ── DIG DEEPER ── */
+.dig-deeper-toggle{width:100%;background:none;border:1.5px dashed var(--border);border-radius:8px;padding:12px 20px;cursor:pointer;font-family:Arial,'Franklin Gothic Medium',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s;margin-bottom:16px;}
+.dig-deeper-toggle:hover{border-color:var(--green-mid);color:var(--green-mid);background:rgba(42,92,63,0.04);}
+.dig-deeper-toggle.open{border-color:var(--green-mid);color:var(--green-mid);background:rgba(42,92,63,0.04);}
+.dig-deeper-arrow{transition:transform 0.25s;font-size:14px;}
+.dig-deeper-toggle.open .dig-deeper-arrow{transform:rotate(180deg);}
+.dig-deeper-panel{display:none;animation:fadeUp 0.3s ease both;}
+.dig-deeper-panel.open{display:block;}
+.dig-deeper-label{font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);background:rgba(201,151,58,0.08);border:1px solid rgba(201,151,58,0.2);padding:4px 14px;border-radius:3px;display:inline-block;margin-bottom:16px;}
+
+/* ── ACTION ROW ── */
+.action-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-top:18px;border-top:1px solid var(--border);margin-top:4px;}
+.btn-group{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.btn{display:inline-flex;align-items:center;gap:6px;font-family:Arial,'Franklin Gothic Medium',sans-serif;font-size:11.5px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:8px 16px;border-radius:6px;border:none;cursor:pointer;text-decoration:none;transition:all 0.18s;}
+.btn-pdf{background:var(--green-dark);color:white;}
+.btn-pdf:hover{background:var(--green-mid);transform:translateY(-1px);}
+.btn-excel{background:white;color:var(--green-dark);border:1.5px solid var(--green-dark);}
+.btn-excel:hover{background:var(--green-dark);color:white;}
+.btn-dashboard{background:var(--gold);color:var(--charcoal);}
+.btn-dashboard:hover{background:var(--gold-light);transform:translateY(-1px);}
+.action-right{text-align:right;}
+.source-note{font-size:10.5px;color:var(--muted);font-style:italic;display:block;}
+.dashboard-disclaimer{font-size:10px;color:var(--muted);margin-top:3px;display:block;}
+
+/* ── RESOURCES ── */
+.resources-section{margin-top:48px;scroll-margin-top:120px;}
+.resources-header{background:var(--green-dark);border-radius:12px 12px 0 0;padding:24px 32px;color:white;}
+.resources-header h2{font-family:'Franklin Gothic Heavy','Franklin Gothic Demi','Arial Black',Arial,sans-serif;font-size:20px;color:var(--gold-light);margin-bottom:4px;}
+.resources-header p{font-size:13px;color:rgba(255,255,255,0.55);}
+.resources-body{background:white;border:1px solid var(--border);border-top:none;border-radius:0 0 12px 12px;padding:28px 32px;}
+.resources-group{margin-bottom:28px;}
+.resources-group:last-child{margin-bottom:0;}
+.resources-group-title{font-size:10.5px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--green-dark);margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:8px;}
+.links-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;}
+.link-card{background:var(--off-white);border:1px solid var(--border);border-radius:8px;padding:14px 16px;text-decoration:none;color:var(--charcoal);transition:all 0.18s;display:flex;align-items:flex-start;gap:10px;}
+.link-card:hover{background:rgba(42,92,63,0.05);border-color:var(--green-mid);transform:translateY(-1px);}
+.link-card-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+.link-card-title{font-size:12.5px;font-weight:700;color:var(--green-dark);margin-bottom:2px;}
+.link-card-desc{font-size:11px;color:var(--muted);line-height:1.4;}
+.link-card-note{font-size:10px;color:var(--gold);font-style:italic;margin-top:3px;}
+
+/* ── FOOTER ── */
+footer{background:var(--charcoal);color:rgba(255,255,255,0.45);text-align:center;padding:24px 40px;font-size:11.5px;margin-top:60px;letter-spacing:0.04em;line-height:1.8;}
+footer strong{color:var(--gold-light);}
+footer a{color:var(--gold-light);text-decoration:none;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:680px){
+  .header-top{padding:8px 14px;}
+  main{padding:0 12px 40px;}
+  .section-body{padding:16px 14px;}
+  .action-row{flex-direction:column;align-items:flex-start;}
+  .action-right{text-align:left;}
+  .hero{padding:36px 16px 32px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="header-top">
+    <div class="logo-left">SHSO<span>State Highway Safety Office</span></div>
+    <div class="wordmark-wrap">
+      <div style="display:flex;align-items:center;justify-content:center;gap:12px;">
+        <span style="display:block;width:28px;height:1px;background:rgba(212,155,30,0.4);"></span>
+        <span style="font-family:'Franklin Gothic Heavy','Arial Black',Arial,sans-serif;font-weight:900;font-size:22px;letter-spacing:0.18em;color:#ffffff;">BEACON</span>
+        <span style="display:block;width:28px;height:1px;background:rgba(212,155,30,0.4);"></span>
+      </div>  
+      <div class="wordmark-sub">Baseline Evidence & Crash Outreach Navigator</div>
+    </div>
+    <div class="logo-right" style="text-align:right">
+      <img src="https://shso.vermont.gov/themes/custom/agency_template/assets/img/vermont-logo-white.png" alt="Vermont" style="max-height:22px;width:auto;" onerror="this.style.display='none';this.parentNode.innerHTML='Vermont<span>Agency of Transportation</span>'"/>
+    </div>
+  </div>
+  <nav>
+    <div class="nav-inner">
+      <a href="#overview">Overview</a>
+      <a href="#distracted">Distracted Driving</a>
+      <a href="#impaired">Impaired Driving</a>
+      <a href="#occupant">Occupant Protection</a>
+      <a href="#speeding">Speeding</a>
+      <a href="#older">Older Drivers</a>
+      <a href="#motorcycle">Motorcyclists</a>
+      <a href="#younger">Younger Drivers</a>
+      <a href="#pedestrian">Pedestrians</a>
+      <a href="#bicycle">Bicyclists</a>
+      <a href="#resources">Resources</a>
+    </div>
+  </nav>
+</header>
+
+<!-- ── HERO ── -->
+<div class="hero">
+  <div class="hero-cea-label">Critical Emphasis Areas</div>
+  <h1>Vermont Traffic Safety — Data Foundation for Education Grantees</h1>
+  <p>BEACON is your evidence-based companion for crafting data-driven NOFO applications. Each Critical Emphasis Area presents verified Vermont crash data to support your grant research and program justification.</p>
+  <div class="hero-pills">
+    <span class="pill gold">Data Years: 2020–2024</span>
+    <span class="pill">Source: VTrans Data Unit</span>
+    <span class="pill">SHSO · Vermont VTrans</span>
+    <span class="pill">Updated Annually</span>
+  </div>
+</div>
+
+<main>
+
+<!-- ══════════════════════════
+     OVERVIEW
+══════════════════════════ -->
+<div class="cea-section" id="overview">
+  <div class="section-header">
+    <div class="section-header-text">
+      <div class="cea-tag">CEA · Statewide Overview</div>
+      <h2>Statewide Traffic Safety Overview</h2>
+      <p>Total traffic fatalities · Serious injuries · All crash types · All counties · Data Source: VTrans Data Unit / FARS</p>
+    </div>
+  </div>
+  <div class="section-body">
+    <div class="stat-grid">
+      <div class="stat-card alert">
+        <div class="stat-label">2024 Fatalities (F)</div>
+        <div class="stat-value alert">59</div>
+        <div class="stat-note">5-yr avg: 67.8 · Total 2020–2024: 339</div>
+      </div>
+      <div class="stat-card alert">
+        <div class="stat-label">2024 Serious Injuries (SI)</div>
+        <div class="stat-value alert">317</div>
+        <div class="stat-note">Highest in 5-year window · 5-yr avg: 285.4</div>
+      </div>
+      <div class="stat-card alert">
+        <div class="stat-label">5-Year Total F+SI</div>
+        <div class="stat-value alert">1,766</div>
+        <div class="stat-note">2020–2024 combined · All crash types</div>
+      </div>
+      <div class="stat-card alert">
+        <div class="stat-label">F+SI Trend 2020→2024</div>
+        <div class="stat-value alert" style="font-size:22px">↑ 27%</div>
+        <div class="stat-note">F+SI rising: 297 (2020) → 376 (2024)</div>
+      </div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-box">
+        <div class="chart-title">Fatalities 2020–2024</div>
+        <canvas id="ov-fatal"></canvas>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">Serious Injuries 2020–2024</div>
+        <canvas id="ov-si"></canvas>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">Fatalities &amp; Serious Injuries Combined</div>
+        <canvas id="ov-fsi"></canvas>
+      </div>
+    </div>
+    <button class="dig-deeper-toggle" onclick="toggleDigDeeper('ov')">
+      <span>🔍 Dig Deeper — Age, Month, Time of Day &amp; More</span>
+      <span class="dig-deeper-arrow">▼</span>
+    </button>
+    <div class="dig-deeper-panel" id="ov-deeper">
+      <div class="dig-deeper-label">Extended Analysis · 2020–2024 · All Counties</div>
+      <div class="chart-row">
+        <div class="chart-box">
+          <div class="chart-title">All Crashes by Year</div>
+          <canvas id="ov-crashes"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">F+SI by Age &amp; Sex</div>
+          <canvas id="ov-agesex"></canvas>
+        </div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-box">
+          <div class="chart-title">F+SI by Month</div>
+          <canvas id="ov-month"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">F+SI by Day of Week</div>
+          <canvas id="ov-day"></canvas>
+        </div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-box">
+          <div class="chart-title">F+SI by Time of Day</div>
+          <canvas id="ov-time"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">Crashes by Type</div>
+          <canvas id="ov-type"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">Road Speed Limit (Posted)</div>
+          <canvas id="ov-speed"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="action-row">
+      <div class="btn-group">
+        <button class="btn btn-excel" onclick="exportExcel('overview')" title="Download all data tables in Excel format">📊 Excel Data</button>
+        <button class="btn btn-pdf" onclick="exportPDF('overview')" title="Download PDF with data summary and all resource links">📄 PDF + Links</button>
+        <button id="export-jpg-overview" class="btn" style="background:#5a7a6a;color:white;" onclick="exportJPG('overview')" title="Save a JPG image of this section">📷 Save JPG</button>
+        <a class="btn btn-dashboard" href="https://shsp.vtrans.vermont.gov/pages/data-action-plan" target="_blank">🔗 Full Dashboard</a>
+      </div>
+      <div class="action-right">
+        <span class="source-note">Source: VTrans Data Unit · FARS · All Crash Types · All Counties · 2020–2024</span>
+        <span class="dashboard-disclaimer">⚠️ Dashboard displays 2016–2026 data. BEACON presents 2020–2024 only.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════
+     DISTRACTED DRIVING
+══════════════════════════ -->
+<div class="cea-section" id="distracted">
+  <div class="section-header">
+    <div class="section-header-text">
+      <div class="cea-tag">CEA · Distracted Driving</div>
+      <h2>Distracted Driving</h2>
+      <p>Fatalities and serious bodily injury crashes involving distracted driving behaviors · 2020–2024 · All Counties</p>
+    </div>
+  </div>
+  <div class="section-body">
+    <div class="stat-grid">
+      <div class="stat-card good">
+        <div class="stat-label">2024 Fatalities (F)</div>
+        <div class="stat-value good">3</div>
+        <div class="stat-note">Tied lowest in 5-year window</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">2024 Serious Injuries (SI)</div>
+        <div class="stat-value">48</div>
+        <div class="stat-note">Matches 2020 high — trend watch</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">5-Year Total F+SI</div>
+        <div class="stat-value">246</div>
+        <div class="stat-note">2020–2024 combined</div>
+      </div>
+      <div class="stat-card good">
+        <div class="stat-label">F+SI Trend 2020→2024</div>
+        <div class="stat-value good" style="font-size:22px">↓ 4%</div>
+        <div class="stat-note">F+SI improving: 53 (2020) → 51 (2024)</div>
+      </div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-box">
+        <div class="chart-title">Fatalities 2020–2024</div>
+        <canvas id="dd-fatal"></canvas>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">Serious Injuries 2020–2024</div>
+        <canvas id="dd-si"></canvas>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">Fatalities &amp; Serious Injuries Combined</div>
+        <canvas id="dd-fsi"></canvas>
+      </div>
+    </div>
+    <button class="dig-deeper-toggle" onclick="toggleDigDeeper('dd')">
+      <span>🔍 Dig Deeper — Age, Month, Time of Day &amp; More</span>
+      <span class="dig-deeper-arrow">▼</span>
+    </button>
+    <div class="dig-deeper-panel" id="dd-deeper">
+      <div class="dig-deeper-label">Extended Analysis · 2020–2024 · All Counties</div>
+      <div class="chart-row">
+        <div class="chart-box">
+          <div class="chart-title">All Crashes by Year</div>
+          <canvas id="dd-crashes"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">F+SI by Age &amp; Sex</div>
+          <canvas id="dd-agesex"></canvas>
+        </div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-box">
+          <div class="chart-title">F+SI by Month</div>
+          <canvas id="dd-month"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">F+SI by Day of Week</div>
+          <canvas id="dd-day"></canvas>
+        </div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-box">
+          <div class="chart-title">F+SI by Time of Day</div>
+          <canvas id="dd-time"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">Crashes by Type</div>
+          <canvas id="dd-type"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">Road Speed Limit (Posted)</div>
+          <canvas id="dd-speed"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="action-row">
+      <div class="btn-group">
+        <button class="btn btn-excel" onclick="exportExcel('distracted')" title="Download all data tables in Excel format">📊 Excel Data</button>
+        <button class="btn btn-pdf" onclick="exportPDF('distracted')" title="Download PDF with data summary and all resource links">📄 PDF + Links</button>
+        <button id="export-jpg-distracted" class="btn" style="background:#5a7a6a;color:white;" onclick="exportJPG('distracted')" title="Save a JPG image of this section">📷 Save JPG</button>
+        <a class="btn btn-dashboard" href="https://app.powerbigov.us/view?r=eyJrIjoiY2M3NTJlMzMtZTM1OC00Nzk4LWIxYTgtMjJiOGJkMTNkNmQxIiwidCI6IjIwYjQ5MzNiLWJhYWQtNDMzYy05YzAyLTcwZWRjYzc1NTljNiJ9&pageName=ReportSection5654ee94614c183ed800" target="_blank">🔗 Full Dashboard</a>
+      </div>
+      <div class="action-right">
+        <span class="source-note">Source: County — SHSO Grant Data — 2020–2024 · VTrans Data Unit</span>
+        <span class="dashboard-disclaimer">⚠️ Dashboard displays 2016–2026 data. BEACON presents 2020–2024 only.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════
+     IMPAIRED DRIVING
+══════════════════════════ -->
+<div class="cea-section" id="impaired">
+  <div class="section-header">
+    <div class="section-header-text">
+      <div class="cea-tag">CEA · Impaired Driving</div>
+      <h2>Impaired Driving</h2>
+      <p>Fatalities and serious injuries involving DUI — drugs and/or alcohol · 2020–2024 · All Counties</p>
+    </div>
+  </div>
+  <div class="section-body">
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">2024 Fatalities (F)</div>
+        <div class="stat-value">32</div>
+        <div class="stat-note">Down from peak of 48 in 2021</div>
+      </div>
+      <div class="stat-card good">
+        <div class="stat-label">2024 Serious Injuries (SI)</div>
+        <div class="stat-value good">54</div>
+        <div class="stat-note">Lowest SI in 5-year window</div>
+      </div>
+      <div class="stat-card alert">
+        <div class="stat-label">5-Year Total F+SI</div>
+        <div class="stat-value alert">518</div>
+        <div class="stat-note">2020–2024 combined</div>
+      </div>
+      <div class="stat-card alert">
+        <div class="stat-label">F+SI Trend 2020→2024</div>
+        <div class="stat-value alert" style="font-size:22px">↑ 1%</div>
+        <div class="stat-note">F+SI: 85 (2020) → 86 (2024) · peak 123 in 2022</div>
+      </div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-box">
+        <div class="chart-title">Fatalities 2020–2024</div>
+        <canvas id="imp-fatal"></canvas>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">Serious Injuries 2020–2024</div>
+        <canvas id="imp-si"></canvas>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">Fatalities &amp; Serious Injuries Combined</div>
+        <canvas id="imp-fsi"></canvas>
+      </div>
+    </div>
+    <button class="dig-deeper-toggle" onclick="toggleDigDeeper('imp')">
+      <span>🔍 Dig Deeper — Age, Month, Time of Day &amp; More</span>
+      <span class="dig-deeper-arrow">▼</span>
+    </button>
+    <div class="dig-deeper-panel" id="imp-deeper">
+      <div class="dig-deeper-label">Extended Analysis · 2020–2024 · All Counties</div>
+      <div class="chart-row">
+        <div class="chart-box"><div class="chart-title">All Crashes by Year</div><canvas id="imp-crashes"></canvas></div>
+        <div class="chart-box"><div class="chart-title">F+SI by Age &amp; Sex</div><canvas id="imp-agesex"></canvas></div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-box"><div class="chart-title">F+SI by Month</div><canvas id="imp-month"></canvas></div>
+        <div class="chart-box"><div class="chart-title">F+SI by Day of Week</div><canvas id="imp-day"></canvas></div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-box"><div class="chart-title">F+SI by Time of Day</div><canvas id="imp-time"></canvas></div>
+        <div class="chart-box"><div class="chart-title">Crashes by Type</div><canvas id="imp-type"></canvas></div>
+        <div class="chart-box"><div class="chart-title">Road Speed Limit (Posted)</div><canvas id="imp-speed"></canvas></div>
+      </div>
+    </div>
+    <div class="action-row">
+      <div class="btn-group">
+        <button class="btn btn-excel" onclick="exportExcel('impaired')" title="Download all data tables in Excel format">📊 Excel Data</button>
+        <button class="btn btn-pdf" onclick="exportPDF('impaired')" title="Download PDF with data summary and all resource links">📄 PDF + Links</button>
+        <button id="export-jpg-impaired" class="btn" style="background:#5a7a6a;color:white;" onclick="exportJPG('impaired')" title="Save a JPG image of this section">📷 Save JPG</button>
+        <a class="btn btn-dashboard" href="https://app.powerbigov.us/view?r=eyJrIjoiY2M3NTJlMzMtZTM1OC00Nzk4LWIxYTgtMjJiOGJkMTNkNmQxIiwidCI6IjIwYjQ5MzNiLWJhYWQtNDMzYy05YzAyLTcwZWRjYzc1NTljNiJ9&pageName=ReportSectione0b28e192a813eda7d71" target="_blank">🔗 Full Dashboard</a>
+      </div>
+      <div class="action-right">
+        <span class="source-note">Source: County — SHSO Grant Data — 2020–2024 · VTrans Data Unit</span>
+        <span class="dashboard-disclaimer">⚠️ Dashboard displays 2016–2026 data. BEACON presents 2020–2024 only.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════
+     OCCUPANT PROTECTION
+══════════════════════════ -->
+<div class="cea-section" id="occupant">
+  <div class="section-header">
+    <div class="section-header-text">
+      <div class="cea-tag">CEA · Occupant Protection</div>
+      <h2>Occupant Protection</h2>
+      <p>Fatalities and serious injuries involving improper or lack of restraint use · 2020–2024 · All Counties</p>
+    </div>
+  </div>
+  <div class="section-body">
+    <div class="stat-grid">
+      <div class="stat-card good">
+        <div class="stat-label">2024 Fatalities (F)</div>
+        <div class="stat-value good">28</div>
+        <div class="stat-note">New low in 5-year window — positive sign</div>
+      </div>
+      <div class="stat-card alert">
+        <div class="stat-label">2024 Serious Injuries (SI)</div>
+        <div class="stat-value alert">100</div>
+        <div class="stat-note">Highest in 5-year window</div>
+      </div>
+      <div class="stat-card alert">
+        <div class="stat-label">5-Year Total F+SI</div>
+        <div class="stat-value alert">593</div>
+        <div class="stat-note">2020–2024 combined</div>
+      </div>
+      <div class="stat-card alert">
+        <div class="stat-label">F+SI Trend 2020→2024</div>
+        <div class="stat-value alert" style="font-size:22px">↑ 31%</div>
+        <div class="stat-note">F+SI rising: 98 (2020) → 128 (2024)</div>
+      </div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-box">
+        <div class="chart-title">Fatalities 2020–2024</div>
+        <canvas id="op-fatal"></canvas>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">Serious Injuries 2020–2024</div>
+        <canvas id="op-si"></canvas>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">Fatalities &amp; Serious Injuries Combined</div>
+        <canvas id="op-fsi"></canvas>
+      </div>
+    </div>
+    <button class="dig-deeper-toggle" onclick="toggleDigDeeper('op')">
+      <span>🔍 Dig Deeper — Age, Month, Time of Day &amp; More</span>
+      <span class="dig-deeper-arrow">▼</span>
+    </button>
+    <div class="dig-deeper-panel" id="op-deeper">
+      <div class="dig-deeper-label">Extended Analysis · 2020–2024 · All Counties</div>
+      <div class="chart-row">
+        <div class="chart-box"><div class="chart-title">All Crashes by Year</div><canvas id="op-crashes"></canvas></div>
+        <div class="chart-box"><div class="chart-title">F+SI by Age &amp; Sex</div><canvas id="op-agesex"></canvas></div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-box"><div class="chart-title">F+SI by Month</div><canvas id="op-month"></canvas></div>
+        <div class="chart-box"><div class="chart-title">F+SI by Day of Week</div><canvas id="op-day"></canvas></div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-box"><div class="chart-title">F+SI by Time of Day</div><canvas id="op-time"></canvas></div>
+        <div class="chart-box"><div class="chart-title">Crashes by Type</div><canvas id="op-type"></canvas></div>
+        <div class="chart-box"><div class="chart-title">Road Speed Limit (Posted)</div><canvas id="op-speed"></canvas></div>
+      </div>
+    </div>
+    <div class="action-row">
+      <div class="btn-group">
+        <button class="btn btn-excel" onclick="exportExcel('occupant')" title="Download all data tables in Excel format">📊 Excel Data</button>
+        <button class="btn btn-pdf" onclick="exportPDF('occupant')" title="Download PDF with data summary and all resource links">📄 PDF + Links</button>
+        <button id="export-jpg-occupant" class="btn" style="background:#5a7a6a;color:white;" onclick="exportJPG('occupant')" title="Save a JPG image of this section">📷 Save JPG</button>
+        <a class="btn btn-dashboard" href="https://app.powerbigov.us/view?r=eyJrIjoiY2M3NTJlMzMtZTM1OC00Nzk4LWIxYTgtMjJiOGJkMTNkNmQxIiwidCI6IjIwYjQ5MzNiLWJhYWQtNDMzYy05YzAyLTcwZWRjYzc1NTljNiJ9&pageName=ReportSectionc796c49379990d069077" target="_blank">🔗 Full Dashboard</a>
+      </div>
+      <div class="action-right">
+        <span class="source-note">Source: County — SHSO Grant Data — 2020–2024 · VTrans Data Unit</span>
+        <span class="dashboard-disclaimer">⚠️ Dashboard displays 2016–2026 data. BEACON presents 2020–2024 only.</span>
+      </div>
+    </div>
+
+
+  </div>
+</div>
+
+<!-- ══════════════════════════
+     CHILD PASSENGER SAFETY
+══════════════════════════ -->
+<!-- ══════════════════════════
+     SPEEDING & AGGRESSIVE DRIVING
+══════════════════════════ -->
+<div class="cea-section" id="speeding">
+  <div class="section-header">
+    <div class="section-header-text">
+      <div class="cea-tag">CEA · Speeding &amp; Aggressive Driving</div>
+      <h2>Speeding &amp; Aggressive Driving</h2>
+      <p>Fatalities and serious injuries involving speed-related factors · 2020–2024 · All Counties</p>
+    </div>
+  </div>
+  <div class="section-body">
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">2024 Fatalities (F)</div>
+        <div class="stat-value">14</div>
+        <div class="stat-note">Relatively stable 2022–2024</div>
+      </div>
+      <div class="stat-card alert">
+        <div class="stat-label">2024 Serious Injuries (SI)</div>
+        <div class="stat-value alert">60</div>
+        <div class="stat-note">Highest SI in 5-year window</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">5-Year Total F+SI</div>
+        <div class="stat-value">335</div>
+        <div class="stat-note">2020–2024 combined</div>
+      </div>
+      <div class="stat-card alert">
+        <div class="stat-label">F+SI Trend 2020→2024</div>
+        <div class="stat-value alert" style="font-size:22px">↑ 35%</div>
+        <div class="stat-note">F+SI rising: 55 (2020) → 74 (2024)</div>
+      </div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-box">
+        <div class="chart-title">Fatalities 2020–2024</div>
+        <canvas id="sp-fatal"></canvas>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">Serious Injuries 2020–2024</div>
+        <canvas id="sp-si"></canvas>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">Fatalities &amp; Serious Injuries Combined</div>
+        <canvas id="sp-fsi"></canvas>
+      </div>
+    </div>
+    <button class="dig-deeper-toggle" onclick="toggleDigDeeper('sp')">
+      <span>🔍 Dig Deeper — Age, Month, Time of Day &amp; More</span>
+      <span class="dig-deeper-arrow">▼</span>
+    </button>
+    <div class="dig-deeper-panel" id="sp-deeper">
+      <div class="dig-deeper-label">Extended Analysis · 2020–2024 · All Counties</div>
+      <div class="chart-row">
+        <div class="chart-box"><div class="chart-title">All Crashes by Year</div><canvas id="sp-crashes"></canvas></div>
+        <div class="chart-box"><div class="chart-title">F+SI by Age &amp; Sex</div><canvas id="sp-agesex"></canvas></div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-box"><div class="chart-title">F+SI by Month</div><canvas id="sp-month"></canvas></div>
+        <div class="chart-box"><div class="chart-title">F+SI by Day of Week</div><canvas id="sp-day"></canvas></div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-box"><div class="chart-title">F+SI by Time of Day</div><canvas id="sp-time"></canvas></div>
+        <div class="chart-box"><div class="chart-title">Crashes by Type</div><canvas id="sp-type"></canvas></div>
+        <div class="chart-box"><div class="chart-title">Road Speed Limit (Posted)</div><canvas id="sp-speed"></canvas></div>
+      </div>
+    </div>
+    <div class="action-row">
+      <div class="btn-group">
+        <button class="btn btn-excel" onclick="exportExcel('speeding')" title="Download all data tables in Excel format">📊 Excel Data</button>
+        <button class="btn btn-pdf" onclick="exportPDF('speeding')" title="Download PDF with data summary and all resource links">📄 PDF + Links</button>
+        <button id="export-jpg-speeding" class="btn" style="background:#5a7a6a;color:white;" onclick="exportJPG('speeding')" title="Save a JPG image of this section">📷 Save JPG</button>
+        <a class="btn btn-dashboard" href="https://app.powerbigov.us/view?r=eyJrIjoiY2M3NTJlMzMtZTM1OC00Nzk4LWIxYTgtMjJiOGJkMTNkNmQxIiwidCI6IjIwYjQ5MzNiLWJhYWQtNDMzYy05YzAyLTcwZWRjYzc1NTljNiJ9&pageName=ReportSection02dea5b0dbbeabdca7e7" target="_blank">🔗 Full Dashboard</a>
+      </div>
+      <div class="action-right">
+        <span class="source-note">Source: County — SHSO Grant Data — 2020–2024 · VTrans Data Unit</span>
+        <span class="dashboard-disclaimer">⚠️ Dashboard displays 2016–2026 data. BEACON presents 2020–2024 only.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════
+     PLACEHOLDER SECTIONS
+══════════════════════════ -->
+<div class="cea-section" id="older">
+  <div class="section-header">
+    <div class="section-header-text">
+      <div class="cea-tag">CEA · Older Drivers</div>
+      <h2>Older Drivers</h2>
+      <p>Fatalities and serious injuries — drivers 65 and older · 2020–2024 · All Counties</p>
+    </div>
+  </div>
+  <div class="section-body">
+    <div class="stat-grid">
+      <div class="stat-card good">
+        <div class="stat-label">2024 Fatalities (F)</div>
+        <div class="stat-value good">11</div>
+        <div class="stat-note">Lowest in 5-year window</div>
+      </div>
+      <div class="stat-card alert">
+        <div class="stat-label">2024 Serious Injuries (SI)</div>
+        <div class="stat-value alert">69</div>
+        <div class="stat-note">Tied highest — matches 2021</div>
+      </div>
+      <div class="stat-card alert">
+        <div class="stat-label">5-Year Total F+SI</div>
+        <div class="stat-value alert">402</div>
+        <div class="stat-note">2020–2024 combined</div>
+      </div>
+      <div class="stat-card alert">
+        <div class="stat-label">F+SI Trend 2020→2024</div>
+        <div class="stat-value alert" style="font-size:22px">↑ 29%</div>
+        <div class="stat-note">F+SI rising: 62 (2020) → 80 (2024)</div>
+      </div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-box"><div class="chart-title">Fatalities (F) 2020–2024</div><canvas id="old-fatal"></canvas></div>
+      <div class="chart-box"><div class="chart-title">Serious Injuries (SI) 2020–2024</div><canvas id="old-si"></canvas></div>
+      <div class="chart-box"><div class="chart-title">Fatalities &amp; Serious Injuries Combined</div><canvas id="old-fsi"></canvas></div>
+    </div>
+    <button class="dig-deeper-toggle" style="opacity:0.38;cursor:not-allowed;border-style:dotted;" disabled>
+      <span>🔍 Dig Deeper — Extended data coming soon</span>
+    </button>
+    <div class="action-row">
+      <div class="btn-group">
+        <button class="btn btn-excel" onclick="exportExcel('older')" title="Download all data tables in Excel format">📊 Excel Data</button>
+        <button class="btn btn-pdf" onclick="exportPDF('older')" title="Download PDF with data summary and all resource links">📄 PDF + Links</button>
+        <button id="export-jpg-older" class="btn" style="background:#5a7a6a;color:white;" onclick="exportJPG('older')" title="Save a JPG image of this section">📷 Save JPG</button>
+        <a class="btn btn-dashboard" href="https://app.powerbigov.us/view?r=eyJrIjoiY2M3NTJlMzMtZTM1OC00Nzk4LWIxYTgtMjJiOGJkMTNkNmQxIiwidCI6IjIwYjQ5MzNiLWJhYWQtNDMzYy05YzAyLTcwZWRjYzc1NTljNiJ9&pageName=ReportSection675e69925b597ce09435" target="_blank">🔗 Full Dashboard</a>
+      </div>
+      <div class="action-right">
+        <span class="source-note">Source: VTrans Data Unit · FARS · US Census Bureau ACS</span>
+        <span class="dashboard-disclaimer">⚠️ Dashboard displays 2016–2026 data. BEACON presents 2020–2024 only.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="cea-section" id="motorcycle">
+  <div class="section-header">
+    <div class="section-header-text">
+      <div class="cea-tag">CEA · Motorcyclists</div>
+      <h2>Motorcyclists</h2>
+      <p>Motorcyclist fatalities and serious injuries · 2020–2024 · All Counties</p>
+    </div>
+  </div>
+  <div class="section-body">
+    <div class="stat-grid">
+      <div class="stat-card good">
+        <div class="stat-label">2024 Fatalities (F)</div>
+        <div class="stat-value good">6</div>
+        <div class="stat-note">Lowest in 5-year window</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">2024 Serious Injuries (SI)</div>
+        <div class="stat-value">41</div>
+        <div class="stat-note">Down from peak of 50 in 2023</div>
+      </div>
+      <div class="stat-card alert">
+        <div class="stat-label">5-Year Total F+SI</div>
+        <div class="stat-value alert">257</div>
+        <div class="stat-note">2020–2024 combined</div>
+      </div>
+      <div class="stat-card alert">
+        <div class="stat-label">F+SI Trend 2020→2024</div>
+        <div class="stat-value alert" style="font-size:22px">↑ 24%</div>
+        <div class="stat-note">F+SI rising: 38 (2020) → 47 (2024)</div>
+      </div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-box"><div class="chart-title">Fatalities (F) 2020–2024</div><canvas id="mc-fatal"></canvas></div>
+      <div class="chart-box"><div class="chart-title">Serious Injuries (SI) 2020–2024</div><canvas id="mc-si"></canvas></div>
+      <div class="chart-box"><div class="chart-title">Fatalities &amp; Serious Injuries Combined</div><canvas id="mc-fsi"></canvas></div>
+    </div>
+    <button class="dig-deeper-toggle" style="opacity:0.38;cursor:not-allowed;border-style:dotted;" disabled>
+      <span>🔍 Dig Deeper — Extended data coming soon</span>
+    </button>
+    <div class="action-row">
+      <div class="btn-group">
+        <button class="btn btn-excel" onclick="exportExcel('motorcycle')" title="Download all data tables in Excel format">📊 Excel Data</button>
+        <button class="btn btn-pdf" onclick="exportPDF('motorcycle')" title="Download PDF with data summary and all resource links">📄 PDF + Links</button>
+        <button id="export-jpg-motorcycle" class="btn" style="background:#5a7a6a;color:white;" onclick="exportJPG('motorcycle')" title="Save a JPG image of this section">📷 Save JPG</button>
+        <a class="btn btn-dashboard" href="https://app.powerbigov.us/view?r=eyJrIjoiY2M3NTJlMzMtZTM1OC00Nzk4LWIxYTgtMjJiOGJkMTNkNmQxIiwidCI6IjIwYjQ5MzNiLWJhYWQtNDMzYy05YzAyLTcwZWRjYzc1NTljNiJ9&pageName=ReportSectione6bb8793522100151798" target="_blank">🔗 Full Dashboard</a>
+      </div>
+      <div class="action-right">
+        <span class="source-note">Source: VTrans Data Unit · FARS</span>
+        <span class="dashboard-disclaimer">⚠️ Dashboard displays 2016–2026 data. BEACON presents 2020–2024 only.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="cea-section" id="younger">
+  <div class="section-header">
+    <div class="section-header-text">
+      <div class="cea-tag">CEA · Younger Drivers</div>
+      <h2>Younger Drivers (≤20 Years)</h2>
+      <p>Fatalities and serious injuries — drivers 20 years old or younger · 2020–2024 · All Counties</p>
+    </div>
+  </div>
+  <div class="section-body">
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">2024 Fatalities (F)</div>
+        <div class="stat-value">15</div>
+        <div class="stat-note">Stable — matches 2020 level</div>
+      </div>
+      <div class="stat-card alert">
+        <div class="stat-label">2024 Serious Injuries (SI)</div>
+        <div class="stat-value alert">85</div>
+        <div class="stat-note">Highest in 5-year window</div>
+      </div>
+      <div class="stat-card alert">
+        <div class="stat-label">5-Year Total F+SI</div>
+        <div class="stat-value alert">455</div>
+        <div class="stat-note">2020–2024 combined</div>
+      </div>
+      <div class="stat-card alert">
+        <div class="stat-label">F+SI Trend 2020→2024</div>
+        <div class="stat-value alert" style="font-size:22px">↑ 22%</div>
+        <div class="stat-note">F+SI rising: 82 (2020) → 100 (2024)</div>
+      </div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-box"><div class="chart-title">Fatalities (F) 2020–2024</div><canvas id="yd-fatal"></canvas></div>
+      <div class="chart-box"><div class="chart-title">Serious Injuries (SI) 2020–2024</div><canvas id="yd-si"></canvas></div>
+      <div class="chart-box"><div class="chart-title">Fatalities &amp; Serious Injuries Combined</div><canvas id="yd-fsi"></canvas></div>
+    </div>
+    <button class="dig-deeper-toggle" style="opacity:0.38;cursor:not-allowed;border-style:dotted;" disabled>
+      <span>🔍 Dig Deeper — Extended data coming soon</span>
+    </button>
+    <div class="action-row">
+      <div class="btn-group">
+        <button class="btn btn-excel" onclick="exportExcel('younger')" title="Download all data tables in Excel format">📊 Excel Data</button>
+        <button class="btn btn-pdf" onclick="exportPDF('younger')" title="Download PDF with data summary and all resource links">📄 PDF + Links</button>
+        <button id="export-jpg-younger" class="btn" style="background:#5a7a6a;color:white;" onclick="exportJPG('younger')" title="Save a JPG image of this section">📷 Save JPG</button>
+        <a class="btn btn-dashboard" href="https://app.powerbigov.us/view?r=eyJrIjoiY2M3NTJlMzMtZTM1OC00Nzk4LWIxYTgtMjJiOGJkMTNkNmQxIiwidCI6IjIwYjQ5MzNiLWJhYWQtNDMzYy05YzAyLTcwZWRjYzc1NTljNiJ9&pageName=ReportSection2f07b5a8961447914032" target="_blank">🔗 Full Dashboard</a>
+      </div>
+      <div class="action-right">
+        <span class="source-note">Source: VTrans Data Unit · FARS · Driver Education Dashboard</span>
+        <span class="dashboard-disclaimer">⚠️ Dashboard displays 2016–2026 data. BEACON presents 2020–2024 only.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="cea-section" id="pedestrian">
+  <div class="section-header">
+    <div class="section-header-text">
+      <div class="cea-tag">CEA · Pedestrians</div>
+      <h2>Pedestrians</h2>
+      <p>Pedestrian fatalities and serious injuries · 2020–2024 · All Counties</p>
+    </div>
+  </div>
+  <div class="section-body">
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">2024 Fatalities (F)</div>
+        <div class="stat-value">6</div>
+        <div class="stat-note">Stable over 5-year window</div>
+      </div>
+      <div class="stat-card alert">
+        <div class="stat-label">2024 Serious Injuries (SI)</div>
+        <div class="stat-value alert">37</div>
+        <div class="stat-note">Highest in 5-year window</div>
+      </div>
+      <div class="stat-card alert">
+        <div class="stat-label">5-Year Total F+SI</div>
+        <div class="stat-value alert">161</div>
+        <div class="stat-note">2020–2024 combined</div>
+      </div>
+      <div class="stat-card alert">
+        <div class="stat-label">F+SI Trend 2020→2024</div>
+        <div class="stat-value alert" style="font-size:22px">↑ 65%</div>
+        <div class="stat-note">F+SI rising: 26 (2020) → 43 (2024) · Significant increase — monitor closely</div>
+      </div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-box"><div class="chart-title">Fatalities (F) 2020–2024</div><canvas id="ped-fatal"></canvas></div>
+      <div class="chart-box"><div class="chart-title">Serious Injuries (SI) 2020–2024</div><canvas id="ped-si"></canvas></div>
+      <div class="chart-box"><div class="chart-title">Fatalities &amp; Serious Injuries Combined</div><canvas id="ped-fsi"></canvas></div>
+    </div>
+    <button class="dig-deeper-toggle" style="opacity:0.38;cursor:not-allowed;border-style:dotted;" disabled>
+      <span>🔍 Dig Deeper — Extended data coming soon</span>
+    </button>
+    <div class="action-row">
+      <div class="btn-group">
+        <button class="btn btn-excel" onclick="exportExcel('pedestrian')" title="Download all data tables in Excel format">📊 Excel Data</button>
+        <button class="btn btn-pdf" onclick="exportPDF('pedestrian')" title="Download PDF with data summary and all resource links">📄 PDF + Links</button>
+        <button id="export-jpg-pedestrian" class="btn" style="background:#5a7a6a;color:white;" onclick="exportJPG('pedestrian')" title="Save a JPG image of this section">📷 Save JPG</button>
+        <a class="btn btn-dashboard" href="https://app.powerbigov.us/view?r=eyJrIjoiY2M3NTJlMzMtZTM1OC00Nzk4LWIxYTgtMjJiOGJkMTNkNmQxIiwidCI6IjIwYjQ5MzNiLWJhYWQtNDMzYy05YzAyLTcwZWRjYzc1NTljNiJ9&pageName=ReportSection4c61d389477a80c948be" target="_blank">🔗 Full Dashboard</a>
+      </div>
+      <div class="action-right">
+        <span class="source-note">Source: VTrans Data Unit · FARS · VT Vulnerable Road User Assessment 2023</span>
+        <span class="dashboard-disclaimer">⚠️ Dashboard displays 2016–2026 data. BEACON presents 2020–2024 only.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="cea-section" id="bicycle">
+  <div class="section-header">
+    <div class="section-header-text">
+      <div class="cea-tag">CEA · Bicyclists</div>
+      <h2>Bicyclists</h2>
+      <p>Bicyclist fatalities and serious injuries involving a motor vehicle · 2020–2024 · All Counties</p>
+    </div>
+  </div>
+  <div class="section-body">
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">2024 Fatalities (F)</div>
+        <div class="stat-value">2</div>
+        <div class="stat-note">Small sample — interpret with caution</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">2024 Serious Injuries (SI)</div>
+        <div class="stat-value">9</div>
+        <div class="stat-note">Consistent with 2023</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">5-Year Total F+SI</div>
+        <div class="stat-value">39</div>
+        <div class="stat-note">Motor vehicle crashes only · 2020–2024</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">F+SI Trend 2020→2024</div>
+        <div class="stat-value" style="font-size:22px;color:var(--gold);">3 → 11</div>
+        <div class="stat-note">↑ 267% · small sample — interpret with caution</div>
+      </div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-box"><div class="chart-title">Fatalities (F) 2020–2024</div><canvas id="bic-fatal"></canvas></div>
+      <div class="chart-box"><div class="chart-title">Serious Injuries (SI) 2020–2024</div><canvas id="bic-si"></canvas></div>
+      <div class="chart-box"><div class="chart-title">Fatalities &amp; Serious Injuries Combined</div><canvas id="bic-fsi"></canvas></div>
+    </div>
+    <button class="dig-deeper-toggle" style="opacity:0.38;cursor:not-allowed;border-style:dotted;" disabled>
+      <span>🔍 Dig Deeper — Extended data coming soon</span>
+    </button>
+    <div class="action-row">
+      <div class="btn-group">
+        <button class="btn btn-excel" onclick="exportExcel('bicycle')" title="Download all data tables in Excel format">📊 Excel Data</button>
+        <button class="btn btn-pdf" onclick="exportPDF('bicycle')" title="Download PDF with data summary and all resource links">📄 PDF + Links</button>
+        <button id="export-jpg-bicycle" class="btn" style="background:#5a7a6a;color:white;" onclick="exportJPG('bicycle')" title="Save a JPG image of this section">📷 Save JPG</button>
+        <a class="btn btn-dashboard" href="https://app.powerbigov.us/view?r=eyJrIjoiY2M3NTJlMzMtZTM1OC00Nzk4LWIxYTgtMjJiOGJkMTNkNmQxIiwidCI6IjIwYjQ5MzNiLWJhYWQtNDMzYy05YzAyLTcwZWRjYzc1NTljNiJ9&pageName=ReportSectioncc5b7fca1ad19a251005" target="_blank">🔗 Full Dashboard</a>
+      </div>
+      <div class="action-right">
+        <span class="source-note">Source: VTrans Data Unit · Motor vehicle involved crashes only</span>
+        <span class="dashboard-disclaimer">⚠️ Dashboard displays 2016–2026 data. BEACON presents 2020–2024 only.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════
+     RESOURCES
+══════════════════════════ -->
+<div class="resources-section" id="resources">
+  <div class="resources-header">
+    <h2>📎 Official Resources &amp; Reference Links</h2>
+    <p>Curated data sources, dashboards, reports and tools to support NOFO applications and grant research</p>
+  </div>
+  <div class="resources-body">
+
+    <div class="resources-group">
+      <div class="resources-group-title">🏛️ Vermont Official Sources</div>
+      <div class="links-grid">
+        <a class="link-card" href="https://shso.vermont.gov/content/reports-and-data" target="_blank">
+          <div class="link-card-icon">📋</div>
+          <div><div class="link-card-title">SHSO Reports &amp; Data</div><div class="link-card-desc">All official SHSO reports, annual plans, surveys and assessments</div></div>
+        </a>
+        <a class="link-card" href="https://vtrans.vermont.gov/operations/OSB/data" target="_blank">
+          <div class="link-card-icon">🗄️</div>
+          <div><div class="link-card-title">VTrans Operations &amp; Safety Bureau — Data</div><div class="link-card-desc">VTrans OSB data hub — the source behind Vermont's crash data infrastructure</div></div>
+        </a>
+        <a class="link-card" href="https://apps.vtrans.vermont.gov/CrashPublicQueryTool/" target="_blank">
+          <div class="link-card-icon">🔍</div>
+          <div><div class="link-card-title">Vermont Public Crash Query Tool</div><div class="link-card-desc">Filter Vermont crash data by county, road type, crash type, and year</div></div>
+        </a>
+        <a class="link-card" href="https://vtrans.vermont.gov/highway/safety" target="_blank">
+          <div class="link-card-icon">🛣️</div>
+          <div><div class="link-card-title">Strategic Highway Safety Plan</div><div class="link-card-desc">Vermont SHSP 2022–2026 — statewide safety strategy and CEA objectives</div></div>
+        </a>
+        <a class="link-card" href="https://shsp.vtrans.vermont.gov/pages/data-action-plan" target="_blank">
+          <div class="link-card-icon">📊</div>
+          <div><div class="link-card-title">SHSP Data &amp; Action Plan Dashboard</div><div class="link-card-desc">Vermont SHSP performance measures — C-1, C-2, C-3 statewide overview</div></div>
+        </a>
+        <a class="link-card" href="https://drivewell.vermont.gov/" target="_blank">
+          <div class="link-card-icon">🟢</div>
+          <div><div class="link-card-title">Drive Well Vermont</div><div class="link-card-desc">Vermont's statewide traffic safety education program and outreach resources</div></div>
+        </a>
+      </div>
+    </div>
+
+    <div class="resources-group">
+      <div class="resources-group-title">📈 CEA Dashboards — Power BI</div>
+      <div class="links-grid">
+        <a class="link-card" href="https://app.powerbigov.us/view?r=eyJrIjoiY2M3NTJlMzMtZTM1OC00Nzk4LWIxYTgtMjJiOGJkMTNkNmQxIiwidCI6IjIwYjQ5MzNiLWJhYWQtNDMzYy05YzAyLTcwZWRjYzc1NTljNiJ9&pageName=ReportSection5654ee94614c183ed800" target="_blank">
+          <div class="link-card-icon">📱</div>
+          <div><div class="link-card-title">Distracted Driving Dashboard</div><div class="link-card-desc">F+SI / 5-Year Rolling Average · 2016–2026</div><div class="link-card-note">⚠️ Displays 2016–2026 — filter as needed</div></div>
+        </a>
+        <a class="link-card" href="https://app.powerbigov.us/view?r=eyJrIjoiY2M3NTJlMzMtZTM1OC00Nzk4LWIxYTgtMjJiOGJkMTNkNmQxIiwidCI6IjIwYjQ5MzNiLWJhYWQtNDMzYy05YzAyLTcwZWRjYzc1NTljNiJ9&pageName=ReportSectione0b28e192a813eda7d71" target="_blank">
+          <div class="link-card-icon">📱</div>
+          <div><div class="link-card-title">Impaired Driving Dashboard</div><div class="link-card-desc">F+SI / 5-Year Rolling Average · 2016–2026</div><div class="link-card-note">⚠️ Displays 2016–2026 — filter as needed</div></div>
+        </a>
+        <a class="link-card" href="https://app.powerbigov.us/view?r=eyJrIjoiY2M3NTJlMzMtZTM1OC00Nzk4LWIxYTgtMjJiOGJkMTNkNmQxIiwidCI6IjIwYjQ5MzNiLWJhYWQtNDMzYy05YzAyLTcwZWRjYzc1NTljNiJ9&pageName=ReportSectionc796c49379990d069077" target="_blank">
+          <div class="link-card-icon">📱</div>
+          <div><div class="link-card-title">Occupant Protection Dashboard</div><div class="link-card-desc">F+SI / 5-Year Rolling Average · 2016–2026</div><div class="link-card-note">⚠️ Displays 2016–2026 — filter as needed</div></div>
+        </a>
+        <a class="link-card" href="https://app.powerbigov.us/view?r=eyJrIjoiY2M3NTJlMzMtZTM1OC00Nzk4LWIxYTgtMjJiOGJkMTNkNmQxIiwidCI6IjIwYjQ5MzNiLWJhYWQtNDMzYy05YzAyLTcwZWRjYzc1NTljNiJ9&pageName=ReportSection02dea5b0dbbeabdca7e7" target="_blank">
+          <div class="link-card-icon">📱</div>
+          <div><div class="link-card-title">Speeding &amp; Aggressive Driving Dashboard</div><div class="link-card-desc">F+SI / 5-Year Rolling Average · 2016–2026</div><div class="link-card-note">⚠️ Displays 2016–2026 — filter as needed</div></div>
+        </a>
+        <a class="link-card" href="https://app.powerbigov.us/view?r=eyJrIjoiY2M3NTJlMzMtZTM1OC00Nzk4LWIxYTgtMjJiOGJkMTNkNmQxIiwidCI6IjIwYjQ5MzNiLWJhYWQtNDMzYy05YzAyLTcwZWRjYzc1NTljNiJ9&pageName=ReportSection675e69925b597ce09435" target="_blank">
+          <div class="link-card-icon">📱</div>
+          <div><div class="link-card-title">Older Drivers Dashboard</div><div class="link-card-desc">F+SI / 5-Year Rolling Average · 2016–2026</div><div class="link-card-note">⚠️ Displays 2016–2026 — filter as needed</div></div>
+        </a>
+        <a class="link-card" href="https://app.powerbigov.us/view?r=eyJrIjoiY2M3NTJlMzMtZTM1OC00Nzk4LWIxYTgtMjJiOGJkMTNkNmQxIiwidCI6IjIwYjQ5MzNiLWJhYWQtNDMzYy05YzAyLTcwZWRjYzc1NTljNiJ9&pageName=ReportSectione6bb8793522100151798" target="_blank">
+          <div class="link-card-icon">📱</div>
+          <div><div class="link-card-title">Motorcyclists Dashboard</div><div class="link-card-desc">F+SI / 5-Year Rolling Average · 2016–2026</div><div class="link-card-note">⚠️ Displays 2016–2026 — filter as needed</div></div>
+        </a>
+        <a class="link-card" href="https://app.powerbigov.us/view?r=eyJrIjoiY2M3NTJlMzMtZTM1OC00Nzk4LWIxYTgtMjJiOGJkMTNkNmQxIiwidCI6IjIwYjQ5MzNiLWJhYWQtNDMzYy05YzAyLTcwZWRjYzc1NTljNiJ9&pageName=ReportSection2f07b5a8961447914032" target="_blank">
+          <div class="link-card-icon">📱</div>
+          <div><div class="link-card-title">Younger Drivers Dashboard</div><div class="link-card-desc">F+SI / 5-Year Rolling Average · 2016–2026</div><div class="link-card-note">⚠️ Displays 2016–2026 — filter as needed</div></div>
+        </a>
+        <a class="link-card" href="https://app.powerbigov.us/view?r=eyJrIjoiY2M3NTJlMzMtZTM1OC00Nzk4LWIxYTgtMjJiOGJkMTNkNmQxIiwidCI6IjIwYjQ5MzNiLWJhYWQtNDMzYy05YzAyLTcwZWRjYzc1NTljNiJ9&pageName=ReportSection4c61d389477a80c948be" target="_blank">
+          <div class="link-card-icon">📱</div>
+          <div><div class="link-card-title">Pedestrians Dashboard</div><div class="link-card-desc">F+SI / 5-Year Rolling Average · 2016–2026</div><div class="link-card-note">⚠️ Displays 2016–2026 — filter as needed</div></div>
+        </a>
+        <a class="link-card" href="https://app.powerbigov.us/view?r=eyJrIjoiY2M3NTJlMzMtZTM1OC00Nzk4LWIxYTgtMjJiOGJkMTNkNmQxIiwidCI6IjIwYjQ5MzNiLWJhYWQtNDMzYy05YzAyLTcwZWRjYzc1NTljNiJ9&pageName=ReportSectioncc5b7fca1ad19a251005" target="_blank">
+          <div class="link-card-icon">📱</div>
+          <div><div class="link-card-title">Bicyclists Dashboard</div><div class="link-card-desc">F+SI / 5-Year Rolling Average · 2016–2026</div><div class="link-card-note">⚠️ Displays 2016–2026 — filter as needed</div></div>
+        </a>
+      </div>
+    </div>
+
+    <div class="resources-group">
+      <div class="resources-group-title">🇺🇸 NHTSA Federal Data Tools</div>
+      <div class="links-grid">
+        <a class="link-card" href="https://cdan.dot.gov/STSI/stsi.htm#" target="_blank">
+          <div class="link-card-icon">🗺️</div>
+          <div><div class="link-card-title">State Traffic Safety Information (STSI)</div><div class="link-card-desc">NHTSA state-level crash statistics tool</div><div class="link-card-note">→ Link opens automatically — click Vermont on the map</div></div>
+        </a>
+        <a class="link-card" href="https://cdan.dot.gov/SASJobExecution/" target="_blank">
+          <div class="link-card-icon">📥</div>
+          <div><div class="link-card-title">NHTSA Traffic Safety Facts — Vermont</div><div class="link-card-desc">Vermont-specific FARS data 2019–2023 · All tables downloadable in Excel</div></div>
+        </a>
+      </div>
+    </div>
+
+    <div class="resources-group">
+      <div class="resources-group-title">📄 NHTSA Traffic Safety Facts — CEA Reports</div>
+      <div class="links-grid">
+        <a class="link-card" href="https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813770" target="_blank">
+          <div class="link-card-icon">🚶</div>
+          <div><div class="link-card-title">Pedestrians, Bicyclists &amp; Non-Motorists</div><div class="link-card-desc">NHTSA Traffic Safety Facts · Publication 813770</div></div>
+        </a>
+        <a class="link-card" href="https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813719" target="_blank">
+          <div class="link-card-icon">👴</div>
+          <div><div class="link-card-title">Older Population Traffic Safety Facts</div><div class="link-card-desc">NHTSA Traffic Safety Facts · Publication 813719</div></div>
+        </a>
+        <a class="link-card" href="https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813736" target="_blank">
+          <div class="link-card-icon">🧑</div>
+          <div><div class="link-card-title">Young Drivers Traffic Safety Facts</div><div class="link-card-desc">NHTSA Traffic Safety Facts · Publication 813736</div></div>
+        </a>
+        <a class="link-card" href="https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813721" target="_blank">
+          <div class="link-card-icon">⚡</div>
+          <div><div class="link-card-title">Speeding Traffic Safety Facts</div><div class="link-card-desc">NHTSA Traffic Safety Facts · Publication 813721</div></div>
+        </a>
+        <a class="link-card" href="https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813713" target="_blank">
+          <div class="link-card-icon">🍺</div>
+          <div><div class="link-card-title">Impaired Driving Traffic Safety Facts</div><div class="link-card-desc">NHTSA Traffic Safety Facts · Publication 813713</div></div>
+        </a>
+        <a class="link-card" href="https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813730" target="_blank">
+          <div class="link-card-icon">🔒</div>
+          <div><div class="link-card-title">Occupant Protection Traffic Safety Facts</div><div class="link-card-desc">NHTSA Traffic Safety Facts · Publication 813730 · 2023 Data</div></div>
+        </a>
+        <a class="link-card" href="https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813732" target="_blank">
+          <div class="link-card-icon">🏍️</div>
+          <div><div class="link-card-title">Motorcyclists Traffic Safety Facts</div><div class="link-card-desc">NHTSA Traffic Safety Facts · Publication 813732</div></div>
+        </a>
+      </div>
+    </div>
+
+    <div class="resources-group">
+      <div class="resources-group-title">📖 Reference</div>
+      <div class="links-grid">
+        <a class="link-card" href="https://shso.vermont.gov/sites/ghsp/files/documents/Vermont%20Vulnerable%20Road%20User%20Safety%20Assessment%202023.pdf" target="_blank">
+          <div class="link-card-icon">🛡️</div>
+          <div><div class="link-card-title">VT Vulnerable Road User Safety Assessment 2023</div><div class="link-card-desc">Pedestrian and bicyclist safety analysis · Strategies and recommendations</div></div>
+        </a>
+        <a class="link-card" href="https://shso.vermont.gov/sites/ghsp/files/documents/2025_VT_FY24_AnnualReport.pdf" target="_blank">
+          <div class="link-card-icon">📑</div>
+          <div><div class="link-card-title">SHSO Annual Report FY2024</div><div class="link-card-desc">Vermont SHSO program outcomes and performance · Most recent annual report</div></div>
+        </a>
+        <a class="link-card" href="#" onclick="exportGlossaryPDF();return false;" style="cursor:pointer;">
+          <div class="link-card-icon">📋</div>
+          <div><div class="link-card-title">SHSO Acronym Glossary</div><div class="link-card-desc">Official list of SHSO acronyms and definitions · 141 terms · Downloadable PDF</div><div class="link-card-note">📥 Click to download PDF</div></div>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</main>
+
+<footer>
+  <strong>BEACON</strong> — Baseline Evidence &amp; Crash Outreach Navigator &nbsp;|&nbsp;
+  Vermont Agency of Transportation · State Highway Safety Office &nbsp;|&nbsp;
+  Data Years: 2020–2024 · Source: VTrans Data Unit / FARS &nbsp;|&nbsp;
+  <a href="https://shso.vermont.gov" target="_blank">shso.vermont.gov</a><br/>
+  Questions? Contact your SHSO Program Manager &nbsp;<strong>Evelyn McFarlane</strong> &nbsp;·&nbsp; Records Officer &nbsp;·&nbsp; <a href="mailto:Evelyn.McFarlane@vermont.gov">Evelyn.McFarlane@vermont.gov</a>
+</footer>
+
+<!-- ══════════════════════════
+     JSON DATA
+══════════════════════════ -->
+<script>
+const YEARS = [2020,2021,2022,2023,2024];
+const AGES  = ['0–14','15–19','20–24','25–34','35–44','45–54','55–64','65+'];
+const MONTHS= ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DAYS  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const TIMES = ['Early Morn\n2–6am','Morning\n6–10am','Mid-Day\n10am–2pm','Afternoon\n2–6pm','Evening\n6–10pm','Night\n10pm–2am'];
+
+const DATA = {
+  overview: {
+    fatal:   { v:[61,74,76,69,59],   a:[62.2,64.2,65.4,65.4,67.8] },
+    si:      { v:[236,281,291,302,317], a:[266.2,258.4,265.6,274.6,285.4] },
+    fsi:     { v:[297,355,367,371,376], a:[328.4,322.6,331,340,353.2] },
+    crashes: { v:[10251,10536,8432,7176,7062], a:[11829.4,11404.2,10557.6,9938.2,8691.4] },
+    female:  [19,47,48,113,87,66,77,134],
+    male:    [25,100,135,245,204,145,132,181],
+    monthly: [103,108,109,107,162,176,207,194,167,170,144,119],
+    daily:   [215,239,216,278,253,265,300],
+    time:    [93,245,338,535,402,144],
+    ctype:   { fatal:315, injury:8160, pdo:26604 },
+    speed:   { labels:['10','15','20','25','30','35','40','45','50','55','60','65','NP'], values:[3,3,0,166,108,376,220,41,604,45,0,154,46] }
+  },
+  distracted: {
+    fatal:   { v:[5,6,9,3,3],   a:[6.4,7.2,5.6,5.4,5.2] },
+    si:      { v:[48,37,46,41,48], a:[52.4,45.8,46.6,44.4,44] },
+    fsi:     { v:[53,43,55,44,51], a:[58.8,53,52.2,49.8,49.2] },
+    crashes: { v:[1326,1362,1433,1333,1236], a:[2196.2,1885.6,1649.8,1478.6,1338] },
+    female:  [6,7,11,16,13,15,18,26],
+    male:    [3,5,18,33,19,14,13,28],
+    monthly: [13,22,21,14,20,25,18,31,18,19,25,20],
+    daily:   [26,39,31,51,30,37,32],
+    time:    [11,42,58,90,31,14],
+    ctype:   { fatal:24, injury:1745, pdo:4921 },
+    speed:   { labels:['10','15','20','25','30','35','40','45','50','55','60','65','NP'], values:[0,1,0,24,10,38,31,4,100,3,0,25,10] }
+  },
+  impaired: {
+    fatal:   { v:[34,48,47,37,32], a:[33.6,35.2,37.2,38.2,39.6] },
+    si:      { v:[51,66,76,73,54], a:[53.6,55.2,60.6,64,64] },
+    fsi:     { v:[85,114,123,110,86], a:[87.2,90.4,97.8,102.2,103.6] },
+    crashes: { v:[420,435,489,433,433], a:[503.8,470.8,459.6,449,442] },
+    female:  [5,12,18,32,25,18,18,17],
+    male:    [7,31,47,105,67,44,38,32],
+    monthly: [19,29,30,34,55,50,66,57,56,38,46,38],
+    daily:   [76,75,55,61,65,68,118],
+    time:    [37,49,64,121,166,79],
+    ctype:   { fatal:182, injury:921, pdo:1107 },
+    speed:   { labels:['10','15','20','25','30','35','40','45','50','55','60','65','NP'], values:[0,2,0,31,24,116,54,9,201,15,0,58,8] }
+  },
+  occupant: {
+    fatal:   { v:[30,31,38,32,28], a:[28.4,29.4,31.4,30,31.8] },
+    si:      { v:[68,71,97,98,100], a:[75.6,71.8,77.4,79.8,86.8] },
+    fsi:     { v:[98,102,135,130,128], a:[104,101.2,108.8,109.8,118.6] },
+    crashes: { v:[351,380,413,426,453], a:[433.2,401,395.4,391.4,404.6] },
+    female:  [7,24,22,48,21,13,22,28],
+    male:    [8,52,44,103,65,49,33,53],
+    monthly: [39,34,43,32,57,58,71,59,57,64,39,40],
+    daily:   [73,79,67,81,87,97,109],
+    time:    [47,80,97,171,141,53],
+    ctype:   { fatal:145, injury:1199, pdo:679 },
+    speed:   { labels:['10','15','20','25','30','35','40','45','50','55','60','65','NP'], values:[1,2,0,43,26,123,66,8,233,13,0,65,13] }
+  },
+  speeding: {
+    fatal:   { v:[10,22,14,13,14], a:[16.6,16,15.2,14.4,14.6] },
+    si:      { v:[45,46,52,59,60], a:[64,55.2,52.6,52.6,52.4] },
+    fsi:     { v:[55,68,66,72,74], a:[80.6,71.2,67.8,67,67] },
+    crashes: { v:[825,785,875,802,802], a:[1328.4,1156.8,1021.6,915.6,817.8] },
+    female:  [3,16,14,15,12,12,9,13],
+    male:    [5,45,33,61,39,23,16,17],
+    monthly: [23,26,15,19,18,40,49,30,30,39,21,25],
+    daily:   [49,44,40,47,39,57,59],
+    time:    [37,48,57,85,78,29],
+    ctype:   { fatal:68, injury:1314, pdo:2707 },
+    speed:   { labels:['10','15','20','25','30','35','40','45','50','55','60','65','NP'], values:[2,0,0,26,16,99,43,7,88,10,0,36,8] }
+  },
+  older: {
+    fatal: { v:[17,17,26,26,11], a:[16,17,19,21,19] },
+    si:    { v:[45,69,61,61,69], a:[54,53,53,57,61] },
+    fsi:   { v:[62,86,87,87,80], a:[70,70,72,78,80] }
+  },
+  motorcycle: {
+    fatal: { v:[9,13,11,18,6],   a:[8,9,9,11,11] },
+    si:    { v:[29,33,47,50,41], a:[31,33,37,39,40] },
+    fsi:   { v:[38,46,58,68,47], a:[39,42,46,50,51] }
+  },
+  younger: {
+    fatal: { v:[15,21,19,12,15], a:[16,16,16,15,16] },
+    si:    { v:[67,83,74,64,85], a:[75,74,75,73,75] },
+    fsi:   { v:[82,104,93,76,100], a:[91,90,91,88,91] }
+  },
+  pedestrian: {
+    fatal: { v:[7,8,6,5,6],     a:[6,7,6,6,6] },
+    si:    { v:[19,28,21,24,37], a:[23,24,24,23,26] },
+    fsi:   { v:[26,36,27,29,43], a:[29,31,30,29,32] }
+  },
+  bicycle: {
+    fatal: { v:[1,0,1,1,2], a:[0,0,0,1,1] },
+    si:    { v:[2,6,9,8,9],  a:[8,6,7,6,7] },
+    fsi:   { v:[3,6,10,9,11], a:[8,6,7,7,8] }
+  }
+};
+
+// ── CHART COLORS ──
+const G = '#2a5c3f', R = '#b84141', GOLD = '#c9973a', T = '#2e7d7a', GRAY = 'rgba(120,140,120,0.3)';
+Chart.defaults.font.family = "Arial, sans-serif";
+Chart.defaults.color = '#6b7c6b';
+
+function comboBar(id, labels, barData, lineData, barLabel, lineLabel, barColor) {
+  const ctx = document.getElementById(id); if(!ctx) return;
+  new Chart(ctx, {
+    data: {
+      labels,
+      datasets: [
+        { type:'bar', label:barLabel, data:barData, backgroundColor:barColor+'bb', borderColor:barColor, borderWidth:1, borderRadius:4 },
+        { type:'line', label:lineLabel, data:lineData, borderColor:GOLD, backgroundColor:'transparent', borderWidth:2, borderDash:[5,3], pointBackgroundColor:GOLD, pointRadius:3, tension:0.3 }
+      ]
+    },
+    options: { responsive:true, plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, font:{size:10} } } }, scales:{ x:{ grid:{display:false}, ticks:{font:{size:10}} }, y:{ beginAtZero:true, grid:{color:'rgba(0,0,0,0.05)'}, ticks:{font:{size:10}} } } }
+  });
+}
+
+function barChart(id, labels, data, color, label) {
+  const ctx = document.getElementById(id); if(!ctx) return;
+  new Chart(ctx, { type:'bar', data:{ labels, datasets:[{ label, data, backgroundColor:color+'bb', borderColor:color, borderWidth:1, borderRadius:3 }] }, options:{ responsive:true, plugins:{ legend:{ display:false } }, scales:{ x:{ grid:{display:false}, ticks:{font:{size:9}} }, y:{ beginAtZero:true, grid:{color:'rgba(0,0,0,0.05)'}, ticks:{font:{size:9}} } } } });
+}
+
+function groupedBar(id, labels, female, male) {
+  const ctx = document.getElementById(id); if(!ctx) return;
+  new Chart(ctx, { type:'bar', data:{ labels, datasets:[ { label:'Female', data:female, backgroundColor:T+'bb', borderColor:T, borderWidth:1, borderRadius:3 }, { label:'Male', data:male, backgroundColor:R+'bb', borderColor:R, borderWidth:1, borderRadius:3 } ] }, options:{ responsive:true, plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, font:{size:10} } } }, scales:{ x:{ grid:{display:false}, ticks:{font:{size:9}} }, y:{ beginAtZero:true, grid:{color:'rgba(0,0,0,0.05)'}, ticks:{font:{size:9}} } } } });
+}
+
+function donutChart(id, d) {
+  const ctx = document.getElementById(id); if(!ctx) return;
+  const total = d.fatal + d.injury + d.pdo;
+  new Chart(ctx, { type:'doughnut', data:{ labels:['Fatal','Injury','Property Damage Only'], datasets:[{ data:[d.fatal, d.injury, d.pdo], backgroundColor:[R+'cc', GOLD+'cc', G+'66'], borderColor:[R, GOLD, G], borderWidth:2 }] }, options:{ responsive:true, plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, font:{size:10} } }, tooltip:{ callbacks:{ label: ctx => ` ${ctx.label}: ${ctx.raw} (${(ctx.raw/total*100).toFixed(1)}%)` } } } } });
+}
+
+function buildChartsLite(prefix, d) {
+  comboBar(`${prefix}-fatal`, YEARS, d.fatal.v, d.fatal.a, 'Fatalities (F)', '5-Yr Avg', R);
+  comboBar(`${prefix}-si`,    YEARS, d.si.v,    d.si.a,    'Serious Injuries (SI)', '5-Yr Avg', G);
+  comboBar(`${prefix}-fsi`,   YEARS, d.fsi.v,   d.fsi.a,   'F+SI Combined', '5-Yr Avg', T);
+}
+
+function buildCharts(prefix, d) {
+  comboBar(`${prefix}-fatal`, YEARS, d.fatal.v, d.fatal.a, 'Fatalities', '5-Yr Avg', R);
+  comboBar(`${prefix}-si`,    YEARS, d.si.v,    d.si.a,    'Serious Injuries', '5-Yr Avg', G);
+  comboBar(`${prefix}-fsi`,   YEARS, d.fsi.v,   d.fsi.a,   'F+SI Combined', '5-Yr Avg', T);
+  comboBar(`${prefix}-crashes`, YEARS, d.crashes.v, d.crashes.a, 'All Crashes', '5-Yr Avg', GOLD);
+  groupedBar(`${prefix}-agesex`, AGES, d.female, d.male);
+  barChart(`${prefix}-month`, MONTHS, d.monthly, G, 'F+SI by Month');
+  barChart(`${prefix}-day`,   DAYS,   d.daily,   R, 'F+SI by Day');
+  barChart(`${prefix}-time`,  ['Early\nMorn','Morning','Mid-Day','Afternoon','Evening','Night'], d.time, T, 'F+SI by Time');
+  donutChart(`${prefix}-type`, d.ctype);
+  barChart(`${prefix}-speed`, d.speed.labels, d.speed.values, GOLD, 'F+SI by Speed Limit');
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  // Briefly show all dig-deeper panels so Chart.js can measure canvas dimensions
+  const allDeeperPanels = document.querySelectorAll('.dig-deeper-panel');
+  allDeeperPanels.forEach(p => { p.style.display = 'block'; p.style.visibility = 'hidden'; });
+
+  buildCharts('ov',  DATA.overview);
+  buildCharts('dd',  DATA.distracted);
+  buildCharts('imp', DATA.impaired);
+  buildCharts('op',  DATA.occupant);
+  buildCharts('sp',  DATA.speeding);
+  buildChartsLite('old', DATA.older);
+  buildChartsLite('mc',  DATA.motorcycle);
+  buildChartsLite('yd',  DATA.younger);
+  buildChartsLite('ped', DATA.pedestrian);
+  buildChartsLite('bic', DATA.bicycle);
+
+  // Restore panels to hidden state
+  allDeeperPanels.forEach(p => { p.style.display = ''; p.style.visibility = ''; });
+});
+
+// ── DIG DEEPER TOGGLE ──
+function toggleDigDeeper(prefix) {
+  const panel = document.getElementById(`${prefix}-deeper`);
+  const btn   = panel.previousElementSibling;
+  const isOpen = panel.classList.contains('open');
+  panel.classList.toggle('open', !isOpen);
+  btn.classList.toggle('open', !isOpen);
+  btn.querySelector('.dig-deeper-arrow').style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
+// ── NAV HIGHLIGHT ──
+const ceaSections = document.querySelectorAll('.cea-section, .resources-section');
+const navLinks = document.querySelectorAll('nav a');
+window.addEventListener('scroll', () => {
+  let cur = '';
+  ceaSections.forEach(s => { if(window.scrollY >= s.offsetTop - 170) cur = s.id; });
+  navLinks.forEach(a => {
+    const isActive = a.getAttribute('href') === '#'+cur;
+    a.classList.toggle('active', isActive);
+    if(isActive) a.scrollIntoView({ behavior:'smooth', block:'nearest', inline:'nearest' });
+  });
+});
+
+// ── SECTION METADATA ──
+const SECTION_META = {
+  overview: {
+    name: 'Statewide Overview',
+    dashboard: 'https://shsp.vtrans.vermont.gov/pages/data-action-plan',
+    nhtsa: null,
+    source: 'VTrans Data Unit · FARS · All Crash Types · All Counties · 2020–2024'
+  },
+  distracted: {
+    name: 'Distracted Driving',
+    dashboard: 'https://app.powerbigov.us/view?r=eyJrIjoiY2M3NTJlMzMtZTM1OC00Nzk4LWIxYTgtMjJiOGJkMTNkNmQxIiwidCI6IjIwYjQ5MzNiLWJhYWQtNDMzYy05YzAyLTcwZWRjYzc1NTljNiJ9&pageName=ReportSection5654ee94614c183ed800',
+    nhtsa: null,
+    source: 'County — SHSO Grant Data — 2020–2024 · VTrans Data Unit'
+  },
+  impaired: {
+    name: 'Impaired Driving',
+    dashboard: 'https://app.powerbigov.us/view?r=eyJrIjoiY2M3NTJlMzMtZTM1OC00Nzk4LWIxYTgtMjJiOGJkMTNkNmQxIiwidCI6IjIwYjQ5MzNiLWJhYWQtNDMzYy05YzAyLTcwZWRjYzc1NTljNiJ9&pageName=ReportSectione0b28e192a813eda7d71',
+    nhtsa: 'https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813713',
+    nhtsaLabel: 'Impaired Driving Traffic Safety Facts (Pub. 813713)',
+    source: 'County — SHSO Grant Data — 2020–2024 · VTrans Data Unit'
+  },
+  occupant: {
+    name: 'Occupant Protection',
+    dashboard: 'https://app.powerbigov.us/view?r=eyJrIjoiY2M3NTJlMzMtZTM1OC00Nzk4LWIxYTgtMjJiOGJkMTNkNmQxIiwidCI6IjIwYjQ5MzNiLWJhYWQtNDMzYy05YzAyLTcwZWRjYzc1NTljNiJ9&pageName=ReportSectionc796c49379990d069077',
+    nhtsa: 'https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813730',
+    nhtsaLabel: 'Occupant Protection Traffic Safety Facts (Pub. 813730)',
+    source: 'County — SHSO Grant Data — 2020–2024 · VTrans Data Unit'
+  },
+  speeding: {
+    name: 'Speeding & Aggressive Driving',
+    dashboard: 'https://app.powerbigov.us/view?r=eyJrIjoiY2M3NTJlMzMtZTM1OC00Nzk4LWIxYTgtMjJiOGJkMTNkNmQxIiwidCI6IjIwYjQ5MzNiLWJhYWQtNDMzYy05YzAyLTcwZWRjYzc1NTljNiJ9&pageName=ReportSection02dea5b0dbbeabdca7e7',
+    nhtsa: 'https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813721',
+    nhtsaLabel: 'Speeding Traffic Safety Facts (Pub. 813721)',
+    source: 'County — SHSO Grant Data — 2020–2024 · VTrans Data Unit'
+  },
+  older: {
+    name: 'Older Drivers',
+    dashboard: 'https://app.powerbigov.us/view?r=eyJrIjoiY2M3NTJlMzMtZTM1OC00Nzk4LWIxYTgtMjJiOGJkMTNkNmQxIiwidCI6IjIwYjQ5MzNiLWJhYWQtNDMzYy05YzAyLTcwZWRjYzc1NTljNiJ9&pageName=ReportSection675e69925b597ce09435',
+    nhtsa: 'https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813719',
+    nhtsaLabel: 'Older Population Traffic Safety Facts (Pub. 813719)',
+    source: 'VTrans Data Unit · FARS · US Census Bureau ACS · 2020–2024'
+  },
+  motorcycle: {
+    name: 'Motorcyclists',
+    dashboard: 'https://app.powerbigov.us/view?r=eyJrIjoiY2M3NTJlMzMtZTM1OC00Nzk4LWIxYTgtMjJiOGJkMTNkNmQxIiwidCI6IjIwYjQ5MzNiLWJhYWQtNDMzYy05YzAyLTcwZWRjYzc1NTljNiJ9&pageName=ReportSectione6bb8793522100151798',
+    nhtsa: 'https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813732',
+    nhtsaLabel: 'Motorcyclists Traffic Safety Facts (Pub. 813732)',
+    source: 'VTrans Data Unit · FARS · 2020–2024'
+  },
+  younger: {
+    name: 'Younger Drivers',
+    dashboard: 'https://app.powerbigov.us/view?r=eyJrIjoiY2M3NTJlMzMtZTM1OC00Nzk4LWIxYTgtMjJiOGJkMTNkNmQxIiwidCI6IjIwYjQ5MzNiLWJhYWQtNDMzYy05YzAyLTcwZWRjYzc1NTljNiJ9&pageName=ReportSection2f07b5a8961447914032',
+    nhtsa: 'https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813736',
+    nhtsaLabel: 'Young Drivers Traffic Safety Facts (Pub. 813736)',
+    source: 'VTrans Data Unit · FARS · Driver Education Dashboard · 2020–2024'
+  },
+  pedestrian: {
+    name: 'Pedestrians',
+    dashboard: 'https://app.powerbigov.us/view?r=eyJrIjoiY2M3NTJlMzMtZTM1OC00Nzk4LWIxYTgtMjJiOGJkMTNkNmQxIiwidCI6IjIwYjQ5MzNiLWJhYWQtNDMzYy05YzAyLTcwZWRjYzc1NTljNiJ9&pageName=ReportSection4c61d389477a80c948be',
+    nhtsa: 'https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813770',
+    nhtsaLabel: 'Pedestrians, Bicyclists & Non-Motorists (Pub. 813770)',
+    source: 'VTrans Data Unit · FARS · VT Vulnerable Road User Assessment 2023 · 2020–2024'
+  },
+  bicycle: {
+    name: 'Bicyclists',
+    dashboard: 'https://app.powerbigov.us/view?r=eyJrIjoiY2M3NTJlMzMtZTM1OC00Nzk4LWIxYTgtMjJiOGJkMTNkNmQxIiwidCI6IjIwYjQ5MzNiLWJhYWQtNDMzYy05YzAyLTcwZWRjYzc1NTljNiJ9&pageName=ReportSectioncc5b7fca1ad19a251005',
+    nhtsa: 'https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813770',
+    nhtsaLabel: 'Pedestrians, Bicyclists & Non-Motorists (Pub. 813770)',
+    source: 'VTrans Data Unit · Motor vehicle involved crashes only · 2020–2024'
+  }
+};
+
+// ── EXPORT EXCEL ──
+function exportExcel(sectionId) {
+  const d = DATA[sectionId]; if(!d) return;
+  const meta = SECTION_META[sectionId]; if(!meta) return;
+  const isLite = !d.crashes;
+
+  const annualHeader = isLite
+    ? ['Year','Fatalities','5-Yr Avg (F)','Serious Injuries','5-Yr Avg (SI)','F+SI Combined','5-Yr Avg (F+SI)']
+    : ['Year','Fatalities','5-Yr Avg (F)','Serious Injuries','5-Yr Avg (SI)','F+SI Combined','5-Yr Avg (F+SI)','All Crashes'];
+
+  const annualRows = YEARS.map((y,i) => isLite
+    ? [y, d.fatal.v[i], d.fatal.a[i], d.si.v[i], d.si.a[i], d.fsi.v[i], d.fsi.a[i]]
+    : [y, d.fatal.v[i], d.fatal.a[i], d.si.v[i], d.si.a[i], d.fsi.v[i], d.fsi.a[i], d.crashes.v[i]]
+  );
+
+  const rows = [
+    [`BEACON — Vermont SHSO · ${meta.name} · 2020–2024`],
+    [`Source: ${meta.source}`],
+    [`Generated: ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}`],
+    [],
+    ['ANNUAL SUMMARY'],
+    annualHeader,
+    ...annualRows,
+    ...(!isLite ? [
+      [],
+      ['F+SI BY AGE GROUP & SEX (2020–2024 Combined)'],
+      ['Age Group','Female','Male','Total'],
+      ...AGES.map((a,i) => [a, d.female[i], d.male[i], d.female[i]+d.male[i]]),
+      [],
+      ['F+SI BY MONTH (2020–2024 Combined)'],
+      ['Month','F+SI Count'],
+      ...MONTHS.map((m,i) => [m, d.monthly[i]]),
+      [],
+      ['F+SI BY DAY OF WEEK (2020–2024 Combined)'],
+      ['Day','F+SI Count'],
+      ...DAYS.map((day,i) => [day, d.daily[i]]),
+      [],
+      ['F+SI BY TIME OF DAY (2020–2024 Combined)'],
+      ['Time Block','F+SI Count'],
+      ...['Early Morning (2–6am)','Morning (6–10am)','Mid-Day (10am–2pm)','Afternoon (2–6pm)','Evening (6–10pm)','Night (10pm–2am)'].map((t,i) => [t, d.time[i]]),
+      [],
+      ['F+SI BY SPEED LIMIT (2020–2024 Combined)'],
+      ['Speed Limit (MPH)','F+SI Count'],
+      ...d.speed.labels.map((s,i) => [s, d.speed.values[i]]),
+      [],
+      ['CRASH TYPE BREAKDOWN (2020–2024 Combined)'],
+      ['Type','Count'],
+      ['Fatal', d.ctype.fatal],
+      ['Injury', d.ctype.injury],
+      ['Property Damage Only (PDO)', d.ctype.pdo],
+    ] : []),
+    [],
+    ['RELATED LINKS & RESOURCES'],
+    ['Resource','URL'],
+    ['Full CEA Dashboard (⚠️ displays 2016–2026)', meta.dashboard],
+    ['SHSP Data & Action Plan', 'https://shsp.vtrans.vermont.gov/pages/data-action-plan'],
+    ['Vermont Crash Query Tool', 'https://apps.vtrans.vermont.gov/CrashPublicQueryTool/'],
+    ['SHSO Reports & Data', 'https://shso.vermont.gov/content/reports-and-data'],
+    ['VTrans OSB Data Hub', 'https://vtrans.vermont.gov/operations/OSB/data'],
+    ...(meta.nhtsa ? [[meta.nhtsaLabel, meta.nhtsa]] : []),
+    ['NHTSA Vermont Traffic Safety Facts', 'https://cdan.dot.gov/SASJobExecution/'],
+    ['NHTSA STSI Dashboard', 'https://cdan.dot.gov/STSI/stsi.htm#']
+  ];
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:40},{wch:18},{wch:18},{wch:18},{wch:18},{wch:18},{wch:18},{wch:18}];
+  XLSX.utils.book_append_sheet(wb, ws, meta.name.substring(0,31));
+  XLSX.writeFile(wb, `BEACON_${sectionId}_VermontSHSO_2020-2024.xlsx`);
+}
+
+// ── CHART IMAGE HELPER (used by exportPDF) ──
+function addChartToPDF(pdf, canvas, x, y, maxW, maxH) {
+  try {
+    const imgData = canvas.toDataURL('image/png');
+    const ratio = canvas.height / canvas.width;
+    const w = maxW;
+    const h = Math.min(maxH, w * ratio);
+    const yOff = (maxH - h) / 2;
+    pdf.setFillColor(248,250,248);
+    pdf.rect(x, y, maxW, maxH, 'F');
+    pdf.setDrawColor(210,228,210); pdf.setLineWidth(0.25);
+    pdf.rect(x, y, maxW, maxH, 'S');
+    pdf.addImage(imgData, 'PNG', x + 1, y + yOff + 1, w - 2, h - 2);
+    return true;
+  } catch(e) { return false; }
+}
+
+// ── EXPORT PDF (Text-Based with Data + Links) ──
+function exportPDF(sectionId) {
+  const d = DATA[sectionId]; if(!d) return;
+  const meta = SECTION_META[sectionId]; if(!meta) return;
+  const isLite = !d.crashes;
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const GRN = [27,61,43], GOLD_C = [201,151,58], CHAR = [30,38,30], MUT = [107,124,107];
+  const W = 210, M = 18, CW = W - M*2;
+
+  // Header bar
+  pdf.setFillColor(...GRN);
+  pdf.rect(0,0,W,28,'F');
+  pdf.setTextColor(232,200,122);
+  pdf.setFont('helvetica','bold');
+  pdf.setFontSize(15);
+  pdf.text('BEACON', W/2, 11, {align:'center'});
+  pdf.setFont('helvetica','normal');
+  pdf.setFontSize(7);
+  pdf.setTextColor(255,255,255);
+  pdf.text('Baseline Evidence & Crash Outreach Navigator', W/2, 17, {align:'center'});
+  pdf.text('Vermont Agency of Transportation · State Highway Safety Office', W/2, 22, {align:'center'});
+
+  // CEA Label
+  pdf.setFillColor(...GOLD_C);
+  pdf.rect(M,32,CW,8,'F');
+  pdf.setTextColor(...GRN);
+  pdf.setFont('helvetica','bold');
+  pdf.setFontSize(9);
+  pdf.text(`CEA · ${meta.name.toUpperCase()}  |  Data Years: 2020–2024`, M+4, 37.5);
+
+  // Title
+  pdf.setTextColor(...CHAR);
+  pdf.setFont('helvetica','bold');
+  pdf.setFontSize(14);
+  pdf.text(meta.name, M, 50);
+  pdf.setFont('helvetica','normal');
+  pdf.setFontSize(8);
+  pdf.setTextColor(...MUT);
+  pdf.text(`Source: ${meta.source}`, M, 56);
+  pdf.text(`Generated: ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}`, M, 61);
+
+  // Section line
+  pdf.setDrawColor(...GRN);
+  pdf.setLineWidth(0.5);
+  pdf.line(M, 65, W-M, 65);
+
+  // Annual Data Table
+  let y = 72;
+  pdf.setFont('helvetica','bold');
+  pdf.setFontSize(9);
+  pdf.setTextColor(...GRN);
+  pdf.text('ANNUAL FATALITIES & SERIOUS INJURIES', M, y);
+  y += 5;
+
+  // Table header
+  const cols = [M, M+20, M+42, M+64, M+90, M+114, M+140];
+  const hdrs = isLite
+    ? ['Year','Fatal','5-Yr Avg','Ser. Inj.','5-Yr Avg','F+SI','5-Yr Avg']
+    : ['Year','Fatal','5-Yr Avg','Ser. Inj.','5-Yr Avg','F+SI','All Crashes'];
+  pdf.setFillColor(240,245,240);
+  pdf.rect(M, y, CW, 6, 'F');
+  pdf.setFont('helvetica','bold');
+  pdf.setFontSize(7.5);
+  pdf.setTextColor(...CHAR);
+  hdrs.forEach((h,i) => pdf.text(h, cols[i]+1, y+4));
+  y += 6;
+
+  YEARS.forEach((yr,i) => {
+    if(i%2===0){ pdf.setFillColor(248,250,248); pdf.rect(M,y,CW,5.5,'F'); }
+    pdf.setFont('helvetica','normal');
+    pdf.setFontSize(7.5);
+    pdf.setTextColor(...CHAR);
+    const row = isLite
+      ? [yr, d.fatal.v[i], d.fatal.a[i], d.si.v[i], d.si.a[i], d.fsi.v[i], d.fsi.a[i]]
+      : [yr, d.fatal.v[i], d.fatal.a[i], d.si.v[i], d.si.a[i], d.fsi.v[i], d.crashes.v[i]];
+    row.forEach((v,j) => pdf.text(String(v), cols[j]+1, y+4));
+    y += 5.5;
+  });
+
+  y += 6;
+  pdf.setDrawColor(220,232,220);
+  pdf.setLineWidth(0.3);
+  pdf.line(M, y, W-M, y);
+  y += 7;
+
+  if(!isLite) {
+  // Age & Sex Table
+  pdf.setFont('helvetica','bold');
+  pdf.setFontSize(9);
+  pdf.setTextColor(...GRN);
+  pdf.text('F+SI BY AGE GROUP & SEX  (2020–2024 Combined)', M, y);
+  y += 5;
+
+  const aCols = [M, M+36, M+60, M+84];
+  pdf.setFillColor(240,245,240);
+  pdf.rect(M, y, CW, 6, 'F');
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(7.5); pdf.setTextColor(...CHAR);
+  ['Age Group','Female','Male','Total'].forEach((h,i) => pdf.text(h, aCols[i]+1, y+4));
+  y += 6;
+
+  AGES.forEach((ag,i) => {
+    if(i%2===0){ pdf.setFillColor(248,250,248); pdf.rect(M,y,CW,5.5,'F'); }
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(7.5); pdf.setTextColor(...CHAR);
+    [ag, d.female[i], d.male[i], d.female[i]+d.male[i]].forEach((v,j) => pdf.text(String(v), aCols[j]+1, y+4));
+    y += 5.5;
+  });
+
+  y += 6;
+  pdf.line(M, y, W-M, y);
+  y += 7;
+
+  // Time / Day / Month side by side
+  const col1 = M, col2 = M + CW/3 + 4, col3 = M + (CW/3)*2 + 8;
+  const timeBlocks = ['Early Morn (2–6am)','Morning (6–10am)','Mid-Day (10–2pm)','Afternoon (2–6pm)','Evening (6–10pm)','Night (10–2am)'];
+
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(9); pdf.setTextColor(...GRN);
+  pdf.text('BY TIME OF DAY', col1, y);
+  pdf.text('BY DAY OF WEEK', col2, y);
+  pdf.text('BY MONTH', col3, y);
+  y += 5;
+
+  const maxRows = Math.max(timeBlocks.length, DAYS.length, MONTHS.length);
+  for(let i=0;i<maxRows;i++){
+    if(i%2===0){ pdf.setFillColor(248,250,248); pdf.rect(M,y,CW,5,'F'); }
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(7); pdf.setTextColor(...CHAR);
+    if(i<timeBlocks.length) { pdf.text(timeBlocks[i], col1, y+3.5); pdf.text(String(d.time[i]), col1+42, y+3.5); }
+    if(i<DAYS.length) { pdf.text(DAYS[i], col2, y+3.5); pdf.text(String(d.daily[i]), col2+14, y+3.5); }
+    if(i<MONTHS.length) { pdf.text(MONTHS[i], col3, y+3.5); pdf.text(String(d.monthly[i]), col3+10, y+3.5); }
+    y += 5;
+  }
+  } // end !isLite
+
+  // Page 2 — Charts
+  const prefixMap2 = { overview:'ov', distracted:'dd', impaired:'imp', occupant:'op', speeding:'sp', older:'old', motorcycle:'mc', younger:'yd', pedestrian:'ped', bicycle:'bic' };
+  const prefix2 = prefixMap2[sectionId];
+  const sectionEl = document.getElementById(sectionId);
+  const deeperPanel2 = document.getElementById(`${prefix2}-deeper`);
+
+  // Temporarily show panel to ensure canvases are rendered, then restore
+  const wasOpen2 = deeperPanel2 && deeperPanel2.classList.contains('open');
+  if(deeperPanel2 && !wasOpen2) {
+    deeperPanel2.style.cssText = 'display:block;visibility:hidden;position:absolute;';
+  }
+  const allCanvases = Array.from(sectionEl.querySelectorAll('canvas'));
+  const primaryC = allCanvases.slice(0,3);
+  const deeperC  = deeperPanel2 ? Array.from(deeperPanel2.querySelectorAll('canvas')) : [];
+  if(deeperPanel2 && !wasOpen2) {
+    deeperPanel2.style.cssText = '';
+  }
+
+  pdf.addPage();
+  pdf.setFillColor(...GRN);
+  pdf.rect(0,0,W,20,'F');
+  pdf.setTextColor(232,200,122);
+  pdf.setFont('helvetica','bold');
+  pdf.setFontSize(12);
+  pdf.text(`BEACON · ${meta.name} · Charts`, W/2, 13, {align:'center'});
+
+  const cW3 = (CW - 8) / 3;
+
+  const cH = cW3 * 0.62; // natural Chart.js aspect ~1.6:1
+  const rowGap = 8;
+  let cy = 26;
+
+  // Primary charts label
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(7.5); pdf.setTextColor(...GRN);
+  pdf.text('PRIMARY CHARTS — FATALITIES · SERIOUS INJURIES · COMBINED F+SI', M, cy+5);
+  cy += 10;
+
+  primaryC.forEach((canvas, i) => {
+    const cx = M + i * (cW3 + 4);
+    addChartToPDF(pdf, canvas, cx, cy, cW3, cH);
+  });
+  cy += cH + rowGap;
+
+  if(deeperC.length > 0) {
+    if(cy + 14 + cH > 270) { pdf.addPage(); cy = 16; }
+    pdf.setFillColor(252,247,235); pdf.rect(M, cy, CW, 8, 'F');
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(7.5); pdf.setTextColor(...GOLD_C);
+    pdf.text('DIG DEEPER — EXTENDED ANALYSIS · AGE & SEX · MONTH · DAY · TIME · CRASH TYPE · SPEED LIMIT', M+3, cy+5.5);
+    cy += 12;
+
+    deeperC.forEach((canvas, i) => {
+      const col = i % 3;
+      if(col === 0 && i > 0) {
+        cy += cH + rowGap;
+        if(cy + cH > 272) { pdf.addPage(); cy = 16; }
+      }
+      const cx = M + col * (cW3 + 4);
+      addChartToPDF(pdf, canvas, cx, cy, cW3, cH);
+    });
+  }
+
+  // Page 3 — Links
+  pdf.addPage();
+  pdf.setFillColor(...GRN);
+  pdf.rect(0,0,W,20,'F');
+  pdf.setTextColor(232,200,122);
+  pdf.setFont('helvetica','bold');
+  pdf.setFontSize(12);
+  pdf.text(`BEACON · ${meta.name} · Resources & Links`, W/2, 13, {align:'center'});
+  y = 30;
+  const linkGroups = [
+    {
+      title: 'CEA DASHBOARD',
+      links: [
+        { label: `${meta.name} Full Dashboard`, url: meta.dashboard, note: '⚠️ Displays 2016–2026 data — filter as needed' },
+        { label: 'SHSP Data & Action Plan (C-1, C-2, C-3)', url: 'https://shsp.vtrans.vermont.gov/pages/data-action-plan' }
+      ]
+    },
+    {
+      title: 'VERMONT DATA TOOLS',
+      links: [
+        { label: 'Vermont Public Crash Query Tool', url: 'https://apps.vtrans.vermont.gov/CrashPublicQueryTool/' },
+        { label: 'VTrans Operations & Safety Bureau — Data', url: 'https://vtrans.vermont.gov/operations/OSB/data' },
+        { label: 'SHSO Reports & Data', url: 'https://shso.vermont.gov/content/reports-and-data' },
+        { label: 'Strategic Highway Safety Plan (SHSP 2022–2026)', url: 'https://vtrans.vermont.gov/highway/safety' },
+        { label: 'Drive Well Vermont', url: 'https://drivewell.vermont.gov/' }
+      ]
+    },
+    {
+      title: 'NHTSA FEDERAL RESOURCES',
+      links: [
+        ...(meta.nhtsa ? [{ label: meta.nhtsaLabel, url: meta.nhtsa }] : []),
+        { label: 'NHTSA Vermont Traffic Safety Facts (FARS 2019–2023)', url: 'https://cdan.dot.gov/SASJobExecution/' },
+        { label: 'State Traffic Safety Information (STSI) — Select Vermont', url: 'https://cdan.dot.gov/STSI/stsi.htm#' },
+        { label: 'Pedestrians, Bicyclists & Non-Motorists (Pub. 813770)', url: 'https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813770' },
+        { label: 'Occupant Protection Facts (Pub. 813730)', url: 'https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813730' },
+        { label: 'Speeding Facts (Pub. 813721)', url: 'https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813721' },
+        { label: 'Impaired Driving Facts (Pub. 813713)', url: 'https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813713' },
+        { label: 'Young Drivers Facts (Pub. 813736)', url: 'https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813736' },
+        { label: 'Older Population Facts (Pub. 813719)', url: 'https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813719' },
+        { label: 'Motorcyclists Facts (Pub. 813732)', url: 'https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/813732' }
+      ]
+    }
+  ];
+
+  linkGroups.forEach(group => {
+    if(y > 255) { pdf.addPage(); y = 20; }
+    pdf.setFillColor(240,245,240);
+    pdf.rect(M, y, CW, 7, 'F');
+    pdf.setFont('helvetica','bold');
+    pdf.setFontSize(8.5);
+    pdf.setTextColor(...GRN);
+    pdf.text(group.title, M+3, y+5);
+    y += 9;
+
+    group.links.forEach(link => {
+      if(y > 265) { pdf.addPage(); y = 20; }
+      pdf.setFont('helvetica','bold');
+      pdf.setFontSize(7.5);
+      pdf.setTextColor(...CHAR);
+      pdf.text(`• ${link.label}`, M+3, y);
+      y += 4.5;
+      pdf.setFont('helvetica','normal');
+      pdf.setFontSize(6.5);
+      pdf.setTextColor(...GOLD_C);
+      const maxUrlChars = 90;
+      const displayUrl = link.url.length > maxUrlChars ? link.url.substring(0, maxUrlChars) + '…' : link.url;
+      pdf.textWithLink(displayUrl, M+5, y, { url: link.url });
+      y += 3.5;
+      if(link.note){
+        pdf.setTextColor(180,65,65);
+        pdf.setFontSize(6);
+        pdf.text(link.note, M+5, y);
+        y += 3.5;
+      }
+      y += 1.5;
+    });
+    y += 4;
+  });
+
+  // Footer
+  pdf.setFillColor(...GRN);
+  pdf.rect(0, 277, W, 20, 'F');
+  pdf.setFont('helvetica','normal');
+  pdf.setFontSize(6.5);
+  pdf.setTextColor(200,200,200);
+  pdf.text('BEACON · Vermont SHSO · Education Grants Data Companion · Data Years 2020–2024', W/2, 285, {align:'center'});
+  pdf.text('Source: County — SHSO Grant Data — 2020–2024 · VTrans Data Unit · shso.vermont.gov', W/2, 290, {align:'center'});
+
+  pdf.save(`BEACON_${sectionId}_DataAndLinks_VermontSHSO.pdf`);
+}
+
+// ── EXPORT JPG — Direct Canvas Renderer (no html2canvas) ──
+async function exportJPG(sectionId) {
+  const btn = document.getElementById(`export-jpg-${sectionId}`);
+  if(btn){ btn.textContent = '⏳ Capturing...'; btn.disabled = true; }
+
+  const names = { overview:'Statewide Overview', distracted:'Distracted Driving', impaired:'Impaired Driving', occupant:'Occupant Protection', speeding:'Speeding & Aggressive Driving', older:'Older Drivers', motorcycle:'Motorcyclists', younger:'Younger Drivers', pedestrian:'Pedestrians', bicycle:'Bicyclists' };
+
+  // ── Grab live chart canvases ──
+  const el = document.getElementById(sectionId);
+  const prefixMap = { overview:'ov', distracted:'dd', impaired:'imp', occupant:'op', speeding:'sp', older:'old', motorcycle:'mc', younger:'yd', pedestrian:'ped', bicycle:'bic' };
+  const prefix = prefixMap[sectionId];
+  const deeperPanel = document.getElementById(`${prefix}-deeper`);
+
+  // Temporarily show panel to ensure canvases are rendered, then restore
+  const wasOpen = deeperPanel && deeperPanel.classList.contains('open');
+  if(deeperPanel && !wasOpen) {
+    deeperPanel.style.cssText = 'display:block;visibility:hidden;position:absolute;';
+  }
+  const primaryCanvases = Array.from(el.querySelectorAll('canvas')).slice(0,3);
+  const deeperCanvases  = deeperPanel ? Array.from(deeperPanel.querySelectorAll('canvas')) : [];
+  if(deeperPanel && !wasOpen) {
+    deeperPanel.style.cssText = '';
+  }
+
+  // ── Dimensions ──
+  const W = 1400, PAD = 48;
+  const CARD_H = 160, CHART_H = 220, FOOTER_H = 60;
+  const DIG_ROWS = Math.ceil(deeperCanvases.length / 3);
+  const DIG_SECTION_H = DIG_ROWS > 0 ? (44 + DIG_ROWS * (CHART_H + 16)) : 0;
+  const totalH = 130 + CARD_H + 40 + CHART_H + 28 + DIG_SECTION_H + 40 + FOOTER_H;
+
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = totalH;
+  const ctx = cv.getContext('2d');
+
+  // Colors
+  const GRN  = '#1b3d2b', GRN2 = '#2a5c3f', GOLD = '#c9973a', GOLDT = '#e8c87a';
+  const OFFW = '#f4f3ef', BOR  = '#dce8dc',  MUT  = '#6b7c6b';
+  const RED  = '#b84141', WHT  = '#ffffff';
+
+  // ── BACKGROUND ──
+  ctx.fillStyle = OFFW; ctx.fillRect(0,0,W,totalH);
+
+  // ── HEADER BAR ──
+  const grad = ctx.createLinearGradient(0,0,W,0);
+  grad.addColorStop(0, GRN); grad.addColorStop(1, GRN2);
+  ctx.fillStyle = grad; ctx.fillRect(0,0,W,110);
+
+  ctx.fillStyle = 'rgba(201,151,58,0.22)';
+  roundRect(ctx, PAD, 18, 220, 24, 4); ctx.fill();
+  ctx.strokeStyle = 'rgba(201,151,58,0.5)'; ctx.lineWidth = 1;
+  roundRect(ctx, PAD, 18, 220, 24, 4); ctx.stroke();
+  ctx.fillStyle = GOLDT; ctx.font = 'bold 11px Arial, sans-serif';
+  ctx.fillText(`CEA · ${(names[sectionId]||'').toUpperCase()}`, PAD+12, 35);
+  ctx.fillStyle = WHT; ctx.font = 'bold 36px Georgia, serif';
+  ctx.fillText(names[sectionId] || sectionId, PAD, 76);
+  ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.font = '14px Arial, sans-serif';
+  ctx.fillText('Data Years: 2020–2024  ·  All Counties  ·  Vermont SHSO', PAD, 98);
+
+  // ── STAT CARDS ──
+  const statCards = {
+    overview: [
+      {label:'2024 FATALITIES', value:'59', note:'5-yr avg: 67.8 · Total: 339', type:'alert'},
+      {label:'2024 SERIOUS INJURIES', value:'317', note:'Highest in 5-year window', type:'alert'},
+      {label:'5-YEAR TOTAL F+SI', value:'1,766', note:'2020–2024 combined', type:'alert'},
+      {label:'F+SI TREND 2020→2024', value:'↑ 27%', note:'F+SI rising: 297 → 376', type:'alert'},
+    ],
+    distracted: [
+      {label:'2024 FATALITIES', value:'3', note:'Tied lowest in 5-year window', type:'good'},
+      {label:'2024 SERIOUS INJURIES', value:'48', note:'Matches 2020 high — trend watch', type:''},
+      {label:'5-YEAR TOTAL F+SI', value:'246', note:'2020–2024 combined', type:''},
+      {label:'F+SI TREND 2020→2024', value:'↓ 4%', note:'F+SI improving: 53 → 51', type:'good'},
+    ],
+    impaired: [
+      {label:'2024 FATALITIES', value:'32', note:'Down from peak of 48 in 2021', type:''},
+      {label:'2024 SERIOUS INJURIES', value:'54', note:'Lowest SI in 5-year window', type:'good'},
+      {label:'5-YEAR TOTAL F+SI', value:'518', note:'2020–2024 combined', type:'alert'},
+      {label:'F+SI TREND 2020→2024', value:'↑ 1%', note:'F+SI: 85 (2020) → 86 (2024)', type:'alert'},
+    ],
+    occupant: [
+      {label:'2024 FATALITIES', value:'28', note:'New low in 5-year window', type:'good'},
+      {label:'2024 SERIOUS INJURIES', value:'100', note:'Highest in 5-year window', type:'alert'},
+      {label:'5-YEAR TOTAL F+SI', value:'593', note:'2020–2024 combined', type:'alert'},
+      {label:'F+SI TREND 2020→2024', value:'↑ 31%', note:'F+SI rising: 98 → 128', type:'alert'},
+    ],
+    speeding: [
+      {label:'2024 FATALITIES', value:'14', note:'Relatively stable 2022–2024', type:''},
+      {label:'2024 SERIOUS INJURIES', value:'60', note:'Highest SI in 5-year window', type:'alert'},
+      {label:'5-YEAR TOTAL F+SI', value:'335', note:'2020–2024 combined', type:''},
+      {label:'F+SI TREND 2020→2024', value:'↑ 35%', note:'F+SI rising: 55 → 74', type:'alert'},
+    ],
+    older: [
+      {label:'2024 FATALITIES', value:'11', note:'Lowest in 5-year window', type:'good'},
+      {label:'2024 SERIOUS INJURIES', value:'69', note:'Tied highest — matches 2021', type:'alert'},
+      {label:'5-YEAR TOTAL F+SI', value:'402', note:'2020–2024 combined', type:'alert'},
+      {label:'F+SI TREND 2020→2024', value:'↑ 29%', note:'F+SI rising: 62 → 80', type:'alert'},
+    ],
+    motorcycle: [
+      {label:'2024 FATALITIES', value:'6', note:'Lowest in 5-year window', type:'good'},
+      {label:'2024 SERIOUS INJURIES', value:'41', note:'Down from peak of 50 in 2023', type:''},
+      {label:'5-YEAR TOTAL F+SI', value:'257', note:'2020–2024 combined', type:'alert'},
+      {label:'F+SI TREND 2020→2024', value:'↑ 24%', note:'F+SI rising: 38 → 47', type:'alert'},
+    ],
+    younger: [
+      {label:'2024 FATALITIES', value:'15', note:'Stable — matches 2020 level', type:''},
+      {label:'2024 SERIOUS INJURIES', value:'85', note:'Highest in 5-year window', type:'alert'},
+      {label:'5-YEAR TOTAL F+SI', value:'455', note:'2020–2024 combined', type:'alert'},
+      {label:'F+SI TREND 2020→2024', value:'↑ 22%', note:'F+SI rising: 82 → 100', type:'alert'},
+    ],
+    pedestrian: [
+      {label:'2024 FATALITIES', value:'6', note:'Stable over 5-year window', type:''},
+      {label:'2024 SERIOUS INJURIES', value:'37', note:'Highest in 5-year window', type:'alert'},
+      {label:'5-YEAR TOTAL F+SI', value:'161', note:'2020–2024 combined', type:'alert'},
+      {label:'F+SI TREND 2020→2024', value:'↑ 65%', note:'F+SI rising: 26 → 43', type:'alert'},
+    ],
+    bicycle: [
+      {label:'2024 FATALITIES', value:'2', note:'Small sample — interpret with caution', type:''},
+      {label:'2024 SERIOUS INJURIES', value:'9', note:'Consistent with 2023', type:''},
+      {label:'5-YEAR TOTAL F+SI', value:'39', note:'Motor vehicle crashes only', type:''},
+      {label:'F+SI TREND 2020→2024', value:'3 → 11', note:'↑ 267% · small sample', type:''},
+    ],
+  };
+
+  const cards = statCards[sectionId] || [];
+  const cardW = (W - PAD*2 - 30) / 4;
+  const cardY = 126;
+  cards.forEach((card, i) => {
+    const cx = PAD + i * (cardW + 10);
+    ctx.fillStyle = WHT; roundRect(ctx, cx, cardY, cardW, CARD_H, 8); ctx.fill();
+    const accentColor = card.type === 'alert' ? RED : card.type === 'good' ? '#3a7a55' : GOLD;
+    ctx.fillStyle = accentColor; roundRect(ctx, cx, cardY, cardW, 4, 2); ctx.fill();
+    ctx.strokeStyle = BOR; ctx.lineWidth = 1; roundRect(ctx, cx, cardY, cardW, CARD_H, 8); ctx.stroke();
+    ctx.fillStyle = MUT; ctx.font = 'bold 10px Arial, sans-serif'; ctx.fillText(card.label, cx+16, cardY+24);
+    const valColor = card.type === 'alert' ? RED : card.type === 'good' ? '#3a7a55' : GRN;
+    ctx.fillStyle = valColor; ctx.font = 'bold 48px Georgia, serif'; ctx.fillText(card.value, cx+16, cardY+84);
+    ctx.fillStyle = MUT; ctx.font = '12px Arial, sans-serif'; ctx.fillText(card.note, cx+16, cardY+116);
+  });
+
+  // ── PRIMARY CHARTS ──
+  const chartY = cardY + CARD_H + 28;
+  ctx.fillStyle = MUT; ctx.font = 'bold 10px Arial, sans-serif';
+  ctx.fillText('PRIMARY CHARTS — FATALITIES · SERIOUS INJURIES · COMBINED F+SI (2020–2024)', PAD, chartY - 8);
+  const chartW = (W - PAD*2 - 24) / 3;
+  primaryCanvases.forEach((srcCanvas, i) => {
+    const cx = PAD + i * (chartW + 12);
+    ctx.fillStyle = OFFW; roundRect(ctx, cx, chartY, chartW, CHART_H, 8); ctx.fill();
+    ctx.strokeStyle = BOR; ctx.lineWidth = 1; roundRect(ctx, cx, chartY, chartW, CHART_H, 8); ctx.stroke();
+    if(srcCanvas && srcCanvas.width > 0) ctx.drawImage(srcCanvas, cx+8, chartY+8, chartW-16, CHART_H-16);
+  });
+
+  // ── DIG DEEPER CHARTS (if open) ──
+  let footerY = chartY + CHART_H + 28;
+  if(deeperCanvases.length > 0) {
+    // Section divider label
+    ctx.fillStyle = 'rgba(201,151,58,0.15)';
+    ctx.fillRect(PAD, footerY, W - PAD*2, 28);
+    ctx.fillStyle = GOLD; ctx.font = 'bold 10px Arial, sans-serif';
+    ctx.fillText('DIG DEEPER — EXTENDED ANALYSIS · AGE & SEX · MONTH · DAY OF WEEK · TIME OF DAY · CRASH TYPE · SPEED LIMIT', PAD+12, footerY+18);
+    footerY += 40;
+
+    deeperCanvases.forEach((srcCanvas, i) => {
+      const col = i % 3;
+      const row = Math.floor(i / 3);
+      const cx = PAD + col * (chartW + 12);
+      const cy = footerY + row * (CHART_H + 16);
+      ctx.fillStyle = OFFW; roundRect(ctx, cx, cy, chartW, CHART_H, 8); ctx.fill();
+      ctx.strokeStyle = BOR; ctx.lineWidth = 1; roundRect(ctx, cx, cy, chartW, CHART_H, 8); ctx.stroke();
+      if(srcCanvas && srcCanvas.width > 0) ctx.drawImage(srcCanvas, cx+8, cy+8, chartW-16, CHART_H-16);
+    });
+    footerY += DIG_ROWS * (CHART_H + 16) + 12;
+  }
+
+  // ── FOOTER BAR ──
+  ctx.fillStyle = GRN; ctx.fillRect(0, footerY, W, FOOTER_H);
+  ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.font = '12px Arial, sans-serif';
+  ctx.fillText(`BEACON  ·  Vermont SHSO  ·  ${names[sectionId]}  ·  Data 2020–2024  ·  Source: VTrans Data Unit`, PAD, footerY + 22);
+  ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.font = '11px Arial, sans-serif';
+  ctx.fillText('⚠️  Full dashboard displays 2016–2026. BEACON presents 2020–2024 only.  ·  shso.vermont.gov', PAD, footerY + 44);
+
+  // ── DOWNLOAD ──
+  const link = document.createElement('a');
+  link.download = `BEACON_${sectionId}_Full_VermontSHSO_2020-2024.jpg`;
+  link.href = cv.toDataURL('image/jpeg', 0.95);
+  link.click();
+
+  if(btn){ btn.textContent = '📷 Save JPG'; btn.disabled = false; }
+}
+
+// ── EXPORT GLOSSARY PDF ──
+function exportGlossaryPDF() {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+  const GRN = [27,61,43], GOLD_C = [201,151,58], CHAR = [30,38,30], MUT = [107,124,107];
+  const W = 210, M = 18, CW = W - M*2;
+
+  const GLOSSARY = [
+    ['AARP','American Association of Retired Persons'],
+    ['AASHTO','American Association of State Highway and Transportation Officials'],
+    ['ACM','Airbag Control Module'],
+    ['AGC','Associated General Contractors (house ProjectRoadSafe)'],
+    ['AID','Asset Inspections and Data Management'],
+    ['ARIDE','Advanced Roadside Impaired Driving Enforcement'],
+    ['BAC','Blood Alcohol Concentration'],
+    ['BAT mobiles','Mobile breath-alcohol testing vehicles'],
+    ['BBR','Better Back Roads'],
+    ['BIS','Bridge Inspections and Budget'],
+    ['BUIYT','Buckle Up In Your Truck'],
+    ['CAD','Computer Aided Dispatch'],
+    ['CDL','Commercial Drivers License'],
+    ['CDR','Crash Data Retrieval'],
+    ['CEA','Critical Emphasis Areas'],
+    ['CEU','Continuing Education Credit'],
+    ['CG','Central Garage'],
+    ['CIOT','Click It or Ticket'],
+    ['CONMAT','Construction and Materials Bureau'],
+    ['CPC','Community Program Coordinator'],
+    ['CPS','Child Passenger Safety'],
+    ['CPSTs','Child Passenger Safety Technicians'],
+    ['CREG','Regional Construction Offices'],
+    ['CRMT','Corridor Management Bureau'],
+    ['CSERV','Construction Services'],
+    ['DDACTS','Data Driven Approaches to Crime and Traffic Safety'],
+    ['DLC','Department of Liquor Control'],
+    ['DMV','Department of Motor Vehicles'],
+    ['DOC','Department of Corrections'],
+    ['DOT','Department of Transportation'],
+    ['DPS','Department of Public Safety'],
+    ['DRE','Drug Recognition Expert'],
+    ['DUI','Driving Under the Influence'],
+    ['DWI','Driving While Intoxicated'],
+    ['EMS','Emergency Medical Services'],
+    ['EMT/EMTs','Emergency Medical Technicians'],
+    ['ENHY','Environmental and Hydraulics'],
+    ['EOBR','Electronic On Board Recorder'],
+    ['FARS','Fatality Analysis Reporting System'],
+    ['FFY','Federal Fiscal Year'],
+    ['FHWA','Federal Highway Administration'],
+    ['FMCA','Federal Motor Carrier Agency'],
+    ['FMCSA','Federal Motor Carrier Safety Administration'],
+    ["four E's",'Enforcement, Education, Engineering, and Emergency Medical Response'],
+    ['GDL','Graduated driver licensing'],
+    ['GEOT','Geotechnical Engineering'],
+    ['GHSA','Governors Highway Safety Association'],
+    ['GHSP',"Governor's Highway Safety Program"],
+    ['GMU','Grants Management Unit'],
+    ['GR',"Governor's Representative"],
+    ['HGN','Horizontal Gaze Nystagmus'],
+    ['HMC','Media consultants'],
+    ['HPMS','Highway Performance Monitoring System'],
+    ['HSD','Highway Safety and Design'],
+    ['HSIP','Highway Safety Improvement Plan'],
+    ['HSO','Highway Safety Office'],
+    ['HSP','Highway Safety Plan'],
+    ['HVE','High Visibility Enforcement'],
+    ['HWY','Highway Division'],
+    ['HWYBO','Highway Division Business Office'],
+    ['I-89','Interstate 89'],
+    ['I-91','Interstate 91'],
+    ['IACP','International Association of Chiefs of Police'],
+    ['IDTF','Impaired Driving Task Force'],
+    ['IID','Ignition Interlock Device'],
+    ['ISTEA','Intermodal Surface Transportation Efficiency Act'],
+    ['IT','Information Technology'],
+    ['JOL','Judicial Outreach Liaison'],
+    ['LATCH','Lower Anchors and Tethers for Children'],
+    ['LCL','Local Projects'],
+    ['LDL','Lower Division License (context-specific usage)'],
+    ['LE','Law Enforcement'],
+    ['LEAs','Law Enforcement Agencies'],
+    ['LEGRC','Law Enforcement Grants Review Committee'],
+    ['LEL','Law Enforcement Liaison'],
+    ['LRS','Linear reference system'],
+    ['MAINT','Maintenance Districts'],
+    ['Major Crash','Fatal or Incapacitating Injury Crash'],
+    ['MAP-21','Moving Ahead for Progress in the 21st Century Act'],
+    ['MOB','Maintenance and Operations Bureau'],
+    ['MOBBO','Maintenance and Operations Business Office'],
+    ['MSF','Motorcycle Safety Foundation'],
+    ['MTST','Materials Testing and Certification'],
+    ['MUN','Municipal Assistance Bureau'],
+    ['MUTCD','Manual on Uniform Traffic Control Devices'],
+    ['NDCF','National Digital Check Form'],
+    ['NGOs','Non-governmental organizations'],
+    ['NHTSA','National Highway Traffic Safety Administration'],
+    ['NLEC','National Law Enforcement Challenge'],
+    ['NOPUS','National Occupant Protection Use Survey'],
+    ['NRHA','National Rural Health Association'],
+    ['NSAI','Norwich Studies and Analysis Institute'],
+    ['NTSB','National Transportation Safety Board'],
+    ['OLS','One-Leg Stand'],
+    ['OP','Occupant Protection'],
+    ['OP802','Occupant Protection to area code 802'],
+    ['OSC','Operating Suspended Civil (operating with a suspended license, civil violation)'],
+    ['PBT','Preliminary Breath Test'],
+    ['PBTs','Preliminary Breath Testing'],
+    ['PEAK','Products for Enforcement Kits'],
+    ['PMPs','Project Management Professionals'],
+    ['PPC','Pay per click'],
+    ['PROJ','Project Delivery Bureau'],
+    ['PSA','Public Service Announcement'],
+    ['PTSC','Police Traffic Services Coordinator'],
+    ['QAU','Quality Assurance Unit'],
+    ['RFI','Request for Information'],
+    ['RFP','Request for Proposal'],
+    ['RMS','Records Management System'],
+    ['RTF','Regional Task Force'],
+    ['RTSF','Regional Traffic Safety Forums'],
+    ['RUS','Right of Way, Utilities and Survey'],
+    ['SAM','Safety, Adult Learning, Motor Skills'],
+    ['SEA','Significant Emphasis Areas'],
+    ['SEE','Safe, Effective, Efficient'],
+    ['SFST','Standardized Field Sobriety Test'],
+    ['SFTY','Safety'],
+    ['SHARP','Safe Highway Alcohol Reduction Program'],
+    ['SHSO','State Highway Safety Office'],
+    ['SHSP','Strategic Highway Safety Plan'],
+    ['SIREN','Statewide Incident Reporting Network'],
+    ['SME','Subject Matter Expert'],
+    ['SRTS','Safe Routes to School'],
+    ['STR','Structures'],
+    ['STSI','State Traffic Safety Information'],
+    ['T-CLOCS','Motorcycle inspection checklist: Tires & Wheels, Controls, Lights, Oil, Chassis, Stands'],
+    ['TCI','Traffic Control Industries'],
+    ['TFTN','Transportation for the Nation'],
+    ['TRCC','Traffic Records Coordinating Committee'],
+    ['TRIPRS','Traffic Records Improvement Program Reporting System'],
+    ['TRSP','Traffic Records Strategic Plan'],
+    ['TSERV','Technical Services'],
+    ['TSRP','Traffic Safety Resource Prosecutor'],
+    ['VDH','Vermont Department of Health'],
+    ['VHB','Vanasse Hangen Brustlin'],
+    ['VHSA','Vermont Highway Safety Alliance'],
+    ['VISION','State accounting system'],
+    ['VLEC','Vermont Law Enforcement Challenge'],
+    ['VMB','Variable message boards'],
+    ['VMT','Vehicle Miles Traveled'],
+    ['VREP','Vermont Rider Education Program'],
+    ['VRU','Vulnerable Road User'],
+    ['VSP','Vermont State Police'],
+    ['VTCJC','Vermont Criminal Justice Council'],
+    ['VTrans','Vermont Agency of Transportation'],
+    ['VTTC','VTrans Training Center'],
+    ['VVIP','Vermont Victim Impact Panel'],
+    ['WAT','Walk-and-Turn'],
+    ['YSC','Youth Safety Council']
+  ];
+
+  function addPageHeader(pageNum) {
+    // Green header bar
+    pdf.setFillColor(...GRN);
+    pdf.rect(0, 0, W, 22, 'F');
+    pdf.setTextColor(232, 200, 122);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(13);
+    pdf.text('BEACON', W / 2, 9, { align: 'center' });
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(6.5);
+    pdf.setTextColor(255, 255, 255);
+    pdf.text('Baseline Evidence & Crash Outreach Navigator', W / 2, 14.5, { align: 'center' });
+    pdf.text('Vermont Agency of Transportation · State Highway Safety Office', W / 2, 19, { align: 'center' });
+
+    // Gold title bar
+    pdf.setFillColor(...GOLD_C);
+    pdf.rect(M, 26, CW, 8, 'F');
+    pdf.setTextColor(...GRN);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(8.5);
+    pdf.text('SHSO ACRONYM GLOSSARY', M + 4, 31.5);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(7);
+    pdf.setTextColor(...GRN);
+    pdf.text(`${GLOSSARY.length} terms  ·  Vermont State Highway Safety Office  ·  Page ${pageNum}`, W - M - 4, 31.5, { align: 'right' });
+  }
+
+  function addPageFooter() {
+    pdf.setFillColor(...GRN);
+    pdf.rect(0, 277, W, 20, 'F');
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(6.5);
+    pdf.setTextColor(200, 200, 200);
+    pdf.text('BEACON · Vermont SHSO · SHSO Acronym Glossary · Education Grants Data Companion', W / 2, 284, { align: 'center' });
+    pdf.text(`shso.vermont.gov  ·  Generated: ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}`, W / 2, 290, { align: 'center' });
+  }
+
+  let pageNum = 1;
+  addPageHeader(pageNum);
+  addPageFooter();
+
+  let y = 40;
+  const colAbbr = M;
+  const colDef  = M + 38;
+  const defWidth = CW - 38;
+  let curLetter = '';
+
+  let rowIndex = 0;
+  GLOSSARY.forEach(([abbr, def]) => {
+    const firstChar = abbr[0].toUpperCase();
+    const letter = /[A-Z]/.test(firstChar) ? firstChar : '#';
+
+    // Letter group header
+    if (letter !== curLetter) {
+      const neededH = 14; // letter header + first row
+      if (y + neededH > 270) {
+        addPageFooter();
+        pdf.addPage();
+        pageNum++;
+        addPageHeader(pageNum);
+        y = 40;
+      }
+      y += 2;
+      pdf.setFillColor(240, 245, 240);
+      pdf.rect(M, y, CW, 7, 'F');
+      pdf.setDrawColor(...GRN);
+      pdf.setLineWidth(0.4);
+      pdf.line(M, y + 7, M + CW, y + 7);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(9);
+      pdf.setTextColor(...GRN);
+      pdf.text(letter, M + 3, y + 5.2);
+      y += 9;
+      curLetter = letter;
+    }
+
+    // Row
+    const defLines = pdf.splitTextToSize(def, defWidth);
+    const rowH = Math.max(6.5, defLines.length * 4.2 + 2);
+
+    if (y + rowH > 270) {
+      addPageFooter();
+      pdf.addPage();
+      pageNum++;
+      addPageHeader(pageNum);
+      y = 40;
+    }
+
+    // Alternating row tint
+    if (rowIndex % 2 === 0) {
+      pdf.setFillColor(250, 252, 250);
+      pdf.rect(M, y, CW, rowH, 'F');
+    }
+
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(7.5);
+    pdf.setTextColor(...CHAR);
+    pdf.text(abbr, colAbbr + 2, y + 4.5);
+
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(...MUT);
+    defLines.forEach((line, li) => {
+      pdf.text(line, colDef, y + 4.5 + li * 4.2);
+    });
+
+    pdf.setDrawColor(220, 232, 220);
+    pdf.setLineWidth(0.15);
+    pdf.line(M, y + rowH, M + CW, y + rowH);
+
+    y += rowH;
+    rowIndex++;
+  });
+
+  addPageFooter();
+  pdf.save('BEACON_SHSO_Acronym_Glossary_VermontSHSO.pdf');
+}
+
+// Helper: rounded rect path
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
+}
+</script>
+</body>
+</html>
