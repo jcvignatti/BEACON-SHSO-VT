@@ -76,5 +76,4 @@ When updating BEACON for a new data year:
 
 ## Data Contact
 
-**Evelyn McFarlane** — SHSO Program Manager & Records Officer (data sign-off authority)
-[Evelyn.McFarlane@vermont.gov](mailto:Evelyn.McFarlane@vermont.gov)
+https://shso.vermont.gov/contact
