@@ -77,8 +77,6 @@ BEACON was built to get a functional, data-accurate tool into grantees' hands be
 **JC Vignatti** — Vermont SHSO, Vermont Agency of Transportation
 [LinkedIn](https://www.linkedin.com/in/jcvignatti/)
 
-**Evelyn McFarlane** — SHSO Program Manager & Records Officer
-[Evelyn.McFarlane@vermont.gov](mailto:Evelyn.McFarlane@vermont.gov)
 
 ---
 
