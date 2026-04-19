@@ -4,7 +4,7 @@
 
 ---
 
-[![Live Tool](https://img.shields.io/badge/Live%20Tool-BEACON-2a5c3f?style=for-the-badge)](https://jcvignatti.github.io/beacon/)
+[![Live Tool](https://img.shields.io/badge/Live%20Tool-BEACON-2a5c3f?style=for-the-badge)](https://jcvignatti.github.io/BEACON-SHSO-VT/)
 [![Data Range](https://img.shields.io/badge/Data-2020–2024-c9973a?style=for-the-badge)](#)
 [![CEA Sections](https://img.shields.io/badge/CEA%20Sections-10-1b3d2b?style=for-the-badge)](#)
 
